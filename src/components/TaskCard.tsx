@@ -9,7 +9,9 @@ import type { Priority, Task } from "@/lib/types";
 interface TaskCardProps {
   task: Task;
   startTime?: string;
+  dayLabel?: string;
   overdueLabel?: string;
+  compact?: boolean;
   onToggleDone: (task: Task) => void;
   onDelete: (task: Task) => void;
   onUpdate: (id: string, patch: Partial<Task>) => void;
@@ -19,7 +21,9 @@ interface TaskCardProps {
 export function TaskCard({
   task,
   startTime,
+  dayLabel,
   overdueLabel,
+  compact,
   onToggleDone,
   onDelete,
   onUpdate,
@@ -31,9 +35,9 @@ export function TaskCard({
 
   return (
     <div
-      className={`rounded-2xl bg-card p-5 animate-[fadeInUp_0.2s_ease-out] ${
-        isDone ? "opacity-50" : ""
-      }`}
+      className={`rounded-2xl bg-card animate-[fadeInUp_0.2s_ease-out] ${
+        compact ? "p-3" : "p-5"
+      } ${isDone ? "opacity-50" : compact ? "opacity-70" : ""}`}
     >
       <div className="flex items-start gap-3">
         <button
@@ -54,11 +58,13 @@ export function TaskCard({
           className="flex-1 text-left"
         >
           <div className="flex items-baseline gap-2">
-            {startTime && (
-              <span className="text-sm font-medium text-neutral-400">{startTime}</span>
+            {(startTime || dayLabel) && (
+              <span className="text-sm font-medium text-neutral-400">
+                {startTime ?? dayLabel}
+              </span>
             )}
             <p
-              className={`text-base ${
+              className={`${compact ? "text-sm" : "text-base"} ${
                 isDone ? "text-neutral-500 line-through" : "text-white"
               }`}
             >

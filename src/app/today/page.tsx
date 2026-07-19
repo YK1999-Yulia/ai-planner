@@ -18,9 +18,11 @@ import {
   undoPendingDelete,
 } from "@/lib/delete-store";
 import { TaskCard } from "@/components/TaskCard";
-import { todayString } from "@/lib/date";
+import { todayString, addDays } from "@/lib/date";
 import { formatOverdueLabel } from "@/lib/format";
 import type { Task } from "@/lib/types";
+
+const HORIZON_DAYS = 7;
 
 function addMinutes(time: string, minutes: number): string {
   const [h, m] = time.split(":").map(Number);
@@ -128,13 +130,28 @@ export default function TodayPage() {
   }
 
   const today = todayString();
+  const horizonLimit = addDays(today, HORIZON_DAYS);
   const visibleTasks = allTasks.filter((t) => t.id !== pendingDelete?.id);
+
   const todayTasks = visibleTasks
     .filter((t) => t.scheduledDate === today)
     .sort((a, b) => a.position - b.position);
+
   const overdueTasks = visibleTasks
     .filter((t) => t.scheduledDate !== null && t.scheduledDate < today && t.completedAt === null)
     .sort((a, b) => (a.scheduledDate as string).localeCompare(b.scheduledDate as string));
+
+  const horizonTasks = visibleTasks
+    .filter(
+      (t) =>
+        t.completedAt === null &&
+        t.deadline !== null &&
+        t.deadline >= today &&
+        t.deadline <= horizonLimit &&
+        t.scheduledDate !== today &&
+        !(t.scheduledDate !== null && t.scheduledDate < today),
+    )
+    .sort((a, b) => (a.deadline as string).localeCompare(b.deadline as string));
 
   let cursor = settings.dayStart;
   const withTimes = todayTasks.map((t) => {
@@ -152,12 +169,7 @@ export default function TodayPage() {
   const inboxHasTasks = allTasks.some(
     (t) => t.scheduledDate === null && t.completedAt === null,
   );
-
-  const heading = (
-    <h1 className="mb-4 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
-      Сьогодні
-    </h1>
-  );
+  const showSectionLabels = overdueTasks.length > 0 || horizonTasks.length > 0;
 
   const overdueSection = overdueTasks.length > 0 && (
     <div className="mb-6">
@@ -180,50 +192,52 @@ export default function TodayPage() {
     </div>
   );
 
-  const deleteToast = pendingDelete && (
-    <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-lg">
-      <span className="truncate text-sm text-neutral-300">
-        Видалено &middot; {pendingDelete.title}
-      </span>
-      <button onClick={undoDelete} className="ml-3 shrink-0 text-sm font-semibold text-accent">
-        Повернути
-      </button>
+  const horizonSection = horizonTasks.length > 0 && (
+    <div className="mt-6">
+      <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-neutral-300">
+        На горизонті
+      </h2>
+      <div className="flex flex-col gap-3">
+        {horizonTasks.map((task) => (
+          <TaskCard
+            key={task.id}
+            task={task}
+            compact
+            onToggleDone={toggleDone}
+            onDelete={remove}
+            onUpdate={update}
+            onScheduleToday={() => update(task.id, { scheduledDate: today })}
+          />
+        ))}
+      </div>
     </div>
   );
 
+  let todayContent: React.ReactNode;
+
   if (todayTasks.length === 0) {
-    return (
-      <main className="min-h-dvh px-4 pb-8 pt-6">
-        {heading}
-        {overdueSection}
-        <div className="flex flex-col items-center py-10 text-center">
-          <p className="mb-6 text-lg text-neutral-300">На сьогодні задач поки немає</p>
+    todayContent = (
+      <div className="flex flex-col items-center py-10 text-center">
+        <p className="mb-6 text-lg text-neutral-300">На сьогодні задач поки немає</p>
+        <Link
+          href="/"
+          className="mb-3 w-full max-w-xs rounded-full bg-accent py-4 text-base font-semibold text-accent-foreground"
+        >
+          Записати першу задачу на сьогодні
+        </Link>
+        {inboxHasTasks && (
           <Link
-            href="/"
-            className="mb-3 w-full max-w-xs rounded-full bg-accent py-4 text-base font-semibold text-accent-foreground"
+            href="/inbox"
+            className="w-full max-w-xs rounded-full bg-neutral-800 py-3 text-base text-neutral-300"
           >
-            Записати першу задачу на сьогодні
+            Взяти з Вхідних
           </Link>
-          {inboxHasTasks && (
-            <Link
-              href="/inbox"
-              className="w-full max-w-xs rounded-full bg-neutral-800 py-3 text-base text-neutral-300"
-            >
-              Взяти з Вхідних
-            </Link>
-          )}
-        </div>
-        {deleteToast}
-      </main>
+        )}
+      </div>
     );
-  }
-
-  if (allDone) {
-    return (
-      <main className="min-h-dvh px-4 pb-8 pt-6">
-        {heading}
-        {overdueSection}
-
+  } else if (allDone) {
+    todayContent = (
+      <>
         <div className="mb-4">
           <p className="mb-2 text-sm text-neutral-300">
             {doneCount} з {todayTasks.length} виконано
@@ -247,85 +261,109 @@ export default function TodayPage() {
             Заглянути у Тиждень
           </Link>
         </div>
-        {deleteToast}
-      </main>
+      </>
+    );
+  } else {
+    todayContent = (
+      <>
+        <div className="mb-4">
+          <p className="mb-2 text-sm text-neutral-300">
+            {doneCount} з {todayTasks.length} виконано
+          </p>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
+            <div
+              className="h-full rounded-full bg-accent transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="mb-4 flex items-center gap-4 rounded-2xl bg-card p-5">
+          <div className="flex-1">
+            <label className="mb-1 block text-xs text-neutral-400">Початок дня</label>
+            <input
+              type="time"
+              value={settings.dayStart}
+              onChange={(e) => updateSetting({ dayStart: e.target.value })}
+              className="w-full rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="mb-1 block text-xs text-neutral-400">Кінець дня</label>
+            <input
+              type="time"
+              value={settings.dayEnd}
+              onChange={(e) => updateSetting({ dayEnd: e.target.value })}
+              className="w-full rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
+            />
+          </div>
+        </div>
+
+        {!planGenerated && (
+          <p className="mb-3 rounded-xl bg-accent/15 px-4 py-3 text-sm font-medium text-accent">
+            План ще не сформований — тисни кнопку нижче, щоб розставити задачі за часом
+          </p>
+        )}
+
+        <button
+          onClick={generatePlan}
+          disabled={generating}
+          className="mb-4 w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40"
+        >
+          {generating ? "Складаю план..." : "Сформувати план на сьогодні"}
+        </button>
+
+        {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
+
+        {overflow && (
+          <p className="mb-4 text-sm text-amber-400">
+            План виходить за межі робочого дня — розглянь можливість прибрати щось.
+          </p>
+        )}
+
+        <div className="flex flex-col gap-4">
+          {withTimes.map(({ task, start }) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              startTime={start}
+              onToggleDone={toggleDone}
+              onDelete={remove}
+              onUpdate={update}
+            />
+          ))}
+        </div>
+      </>
     );
   }
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
-      {heading}
+      <h1 className="mb-4 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
+        Сьогодні
+      </h1>
+
       {overdueSection}
 
-      <div className="mb-4">
-        <p className="mb-2 text-sm text-neutral-300">
-          {doneCount} з {todayTasks.length} виконано
-        </p>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
-          <div
-            className="h-full rounded-full bg-accent transition-all duration-300"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="mb-4 flex items-center gap-4 rounded-2xl bg-card p-5">
-        <div className="flex-1">
-          <label className="mb-1 block text-xs text-neutral-400">Початок дня</label>
-          <input
-            type="time"
-            value={settings.dayStart}
-            onChange={(e) => updateSetting({ dayStart: e.target.value })}
-            className="w-full rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
-          />
-        </div>
-        <div className="flex-1">
-          <label className="mb-1 block text-xs text-neutral-400">Кінець дня</label>
-          <input
-            type="time"
-            value={settings.dayEnd}
-            onChange={(e) => updateSetting({ dayEnd: e.target.value })}
-            className="w-full rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
-          />
-        </div>
-      </div>
-
-      {!planGenerated && (
-        <p className="mb-3 rounded-xl bg-accent/15 px-4 py-3 text-sm font-medium text-accent">
-          План ще не сформований — тисни кнопку нижче, щоб розставити задачі за часом
-        </p>
+      {showSectionLabels && (
+        <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-white">
+          Сьогодні
+        </h2>
       )}
 
-      <button
-        onClick={generatePlan}
-        disabled={generating}
-        className="mb-4 w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40"
-      >
-        {generating ? "Складаю план..." : "Сформувати план на сьогодні"}
-      </button>
+      {todayContent}
+      {horizonSection}
 
-      {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
-
-      {overflow && (
-        <p className="mb-4 text-sm text-amber-400">
-          План виходить за межі робочого дня — розглянь можливість прибрати щось.
-        </p>
+      {pendingDelete && (
+        <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-lg">
+          <span className="truncate text-sm text-neutral-300">
+            Видалено &middot; {pendingDelete.title}
+          </span>
+          <button onClick={undoDelete} className="ml-3 shrink-0 text-sm font-semibold text-accent">
+            Повернути
+          </button>
+        </div>
       )}
-
-      <div className="flex flex-col gap-4">
-        {withTimes.map(({ task, start }) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            startTime={start}
-            onToggleDone={toggleDone}
-            onDelete={remove}
-            onUpdate={update}
-          />
-        ))}
-      </div>
-
-      {deleteToast}
     </main>
   );
 }
