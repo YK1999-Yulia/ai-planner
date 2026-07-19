@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@theme {
+  --color-surface: #1b1b1b;
+  --color-card: #313131;
+  --color-card-hover: #3a3a3a;
+  --color-accent: #b5cff8;
+  --color-accent-foreground: #1b1b1b;
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;

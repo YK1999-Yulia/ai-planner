@@ -200,7 +200,9 @@ export default function WeekPage() {
   if (preview) {
     return (
       <main className="min-h-dvh px-4 pb-8 pt-6">
-        <h1 className="mb-1 text-2xl font-bold text-neutral-100">Перевір розподіл</h1>
+        <h1 className="mb-1 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
+          Перевір розподіл
+        </h1>
         <p className="mb-4 text-sm text-neutral-400">
           Зміни день, де треба, а потім застосуй.
         </p>
@@ -209,14 +211,14 @@ export default function WeekPage() {
           {preview.map((row) => (
             <div
               key={row.id}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-4 animate-[fadeInUp_0.2s_ease-out]"
+              className="flex items-center justify-between gap-3 rounded-2xl bg-card p-5 animate-[fadeInUp_0.2s_ease-out]"
             >
-              <span className="flex-1 text-base text-neutral-100">{row.title}</span>
+              <span className="flex-1 text-base text-white">{row.title}</span>
               <DaySelect
                 value={row.scheduledDate}
                 onChange={(value) => updatePreviewRow(row.id, value)}
                 excludeNone
-                className="rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-sm text-neutral-200"
+                className="rounded-lg bg-neutral-800 px-2 py-2 text-sm text-neutral-200"
               />
             </div>
           ))}
@@ -225,13 +227,13 @@ export default function WeekPage() {
         <div className="mt-6 flex flex-col gap-2">
           <button
             onClick={confirmPreview}
-            className="w-full rounded-2xl bg-neutral-100 py-4 text-lg font-semibold text-neutral-950"
+            className="w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground"
           >
             Застосувати
           </button>
           <button
             onClick={() => setPreview(null)}
-            className="w-full rounded-2xl border border-neutral-700 py-3 text-base text-neutral-300"
+            className="w-full rounded-full bg-neutral-800 py-3 text-base text-neutral-300"
           >
             Скасувати
           </button>
@@ -248,12 +250,14 @@ export default function WeekPage() {
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
-      <h1 className="mb-4 text-2xl font-bold text-neutral-100">Тиждень</h1>
+      <h1 className="mb-4 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
+        Тиждень
+      </h1>
 
       <button
         onClick={distributeWeek}
         disabled={distributing}
-        className="mb-4 w-full rounded-2xl bg-neutral-100 py-4 text-lg font-semibold text-neutral-950 disabled:opacity-40"
+        className="mb-4 w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40"
       >
         {distributing ? "Розподіляю..." : "Розподілити тиждень AI"}
       </button>
@@ -296,9 +300,9 @@ export default function WeekPage() {
               onClick={() => setSelectedDate(date)}
               className={`flex flex-col items-center gap-1 rounded-xl py-2 transition-colors duration-150 ${
                 isSelected
-                  ? "bg-neutral-100 text-neutral-950"
+                  ? "bg-accent text-accent-foreground"
                   : isToday
-                    ? "bg-neutral-800 text-neutral-100"
+                    ? "bg-neutral-800 text-white"
                     : "text-neutral-400"
               }`}
             >
@@ -309,7 +313,7 @@ export default function WeekPage() {
                   <span
                     key={i}
                     className={`h-1 w-1 rounded-full ${
-                      isSelected ? "bg-neutral-950" : "bg-current"
+                      isSelected ? "bg-accent-foreground" : "bg-current"
                     }`}
                   />
                 ))}
@@ -320,10 +324,10 @@ export default function WeekPage() {
       </div>
 
       <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2 className="text-base font-semibold text-neutral-100">
+        <h2 className="text-base font-semibold text-white">
           {WEEKDAY_FULL[weekdayIndex(selectedDate)]}
           {selectedDate === today && (
-            <span className="ml-2 rounded-full bg-neutral-800 px-2 py-0.5 text-xs font-medium text-neutral-300">
+            <span className="ml-2 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
               сьогодні
             </span>
           )}
@@ -352,13 +356,13 @@ export default function WeekPage() {
       )}
 
       {pendingDelete && (
-        <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-neutral-800 px-4 py-3 shadow-lg">
-          <span className="truncate text-sm text-neutral-200">
+        <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-lg">
+          <span className="truncate text-sm text-neutral-300">
             Видалено &middot; {pendingDelete.title}
           </span>
           <button
             onClick={undoDelete}
-            className="ml-3 shrink-0 text-sm font-semibold text-neutral-100"
+            className="ml-3 shrink-0 text-sm font-semibold text-accent"
           >
             Повернути
           </button>

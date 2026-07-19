@@ -82,14 +82,16 @@ export default function InboxPage() {
   if (tasks.length === 0) {
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center px-6 pb-8 text-center">
-        <h1 className="mb-2 text-2xl font-bold text-neutral-100">Тут порожньо</h1>
+        <h1 className="mb-2 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
+          Тут порожньо
+        </h1>
         <p className="mb-6 text-neutral-400">
           Вивали думки на екрані &laquo;Занотувати&raquo; — і задачі
           з&apos;являться тут.
         </p>
         <Link
           href="/"
-          className="rounded-2xl bg-neutral-100 px-6 py-3 text-base font-semibold text-neutral-950"
+          className="rounded-full bg-accent px-6 py-3 text-base font-semibold text-accent-foreground"
         >
           Занотувати
         </Link>
@@ -103,7 +105,9 @@ export default function InboxPage() {
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
-      <h1 className="mb-4 text-2xl font-bold text-neutral-100">Вхідні</h1>
+      <h1 className="mb-4 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
+        Вхідні
+      </h1>
 
       <div className="flex flex-col gap-4">
         {active.map((task) => (
@@ -143,13 +147,13 @@ export default function InboxPage() {
       )}
 
       {pendingDelete && (
-        <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-neutral-800 px-4 py-3 shadow-lg">
-          <span className="truncate text-sm text-neutral-200">
+        <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-lg">
+          <span className="truncate text-sm text-neutral-300">
             Видалено &middot; {pendingDelete.title}
           </span>
           <button
             onClick={undoDelete}
-            className="ml-3 shrink-0 text-sm font-semibold text-neutral-100"
+            className="ml-3 shrink-0 text-sm font-semibold text-accent"
           >
             Повернути
           </button>

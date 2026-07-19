@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/priority";
+import { PRIORITY_LABELS, PRIORITY_CHIP_STYLES } from "@/lib/priority";
 import { formatDeadline } from "@/lib/format";
 import { DaySelect } from "@/components/DaySelect";
 import type { Priority, Task } from "@/lib/types";
@@ -27,7 +27,7 @@ export function TaskCard({
 
   return (
     <div
-      className={`rounded-2xl border border-neutral-800 bg-neutral-900 p-4 animate-[fadeInUp_0.2s_ease-out] ${
+      className={`rounded-2xl bg-card p-5 animate-[fadeInUp_0.2s_ease-out] ${
         isDone ? "opacity-50" : ""
       }`}
     >
@@ -37,7 +37,7 @@ export function TaskCard({
           aria-label={isDone ? "Позначити невиконаною" : "Позначити виконаною"}
           className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-150 ${
             isDone
-              ? "border-neutral-500 bg-neutral-500 text-neutral-950 animate-[checkPop_0.25s_ease-out]"
+              ? "border-accent bg-accent text-accent-foreground animate-[checkPop_0.25s_ease-out]"
               : "border-neutral-600"
           }`}
         >
@@ -55,19 +55,25 @@ export function TaskCard({
             )}
             <p
               className={`text-base ${
-                isDone ? "text-neutral-500 line-through" : "text-neutral-100"
+                isDone ? "text-neutral-500 line-through" : "text-white"
               }`}
             >
               {task.title}
             </p>
           </div>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-neutral-500">
-            <span className={PRIORITY_COLORS[task.priority]}>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+            <span
+              className={`rounded-full px-2 py-0.5 font-medium ${PRIORITY_CHIP_STYLES[task.priority]}`}
+            >
               {PRIORITY_LABELS[task.priority]}
             </span>
-            {task.estimatedMinutes && <span>{task.estimatedMinutes} хв</span>}
+            {task.estimatedMinutes && (
+              <span className="text-neutral-400">{task.estimatedMinutes} хв</span>
+            )}
             {deadlineInfo && (
-              <span className={deadlineInfo.overdue ? "font-medium text-red-400" : undefined}>
+              <span
+                className={deadlineInfo.overdue ? "font-medium text-red-400" : "text-neutral-400"}
+              >
                 {deadlineInfo.label}
               </span>
             )}
@@ -77,26 +83,26 @@ export function TaskCard({
         <button
           onClick={() => onDelete(task)}
           aria-label="Видалити задачу"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-neutral-600"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-neutral-500"
         >
           ✕
         </button>
       </div>
 
       {expanded && (
-        <div className="mt-3 border-t border-neutral-800 pt-3">
-          <label className="mb-1 block text-xs text-neutral-500">Запланована на</label>
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <label className="mb-1 block text-xs text-neutral-400">Запланована на</label>
           <DaySelect
             value={task.scheduledDate}
             onChange={(value) => onUpdate(task.id, { scheduledDate: value })}
-            className="mb-3 w-full rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-neutral-200"
+            className="mb-3 w-full rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
           />
 
           <div className="flex flex-wrap gap-2 text-sm">
             <select
               value={task.priority}
               onChange={(e) => onUpdate(task.id, { priority: e.target.value as Priority })}
-              className="rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-neutral-200"
+              className="rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
             >
               {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -115,14 +121,14 @@ export function TaskCard({
                 })
               }
               placeholder="хв"
-              className="w-20 rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-neutral-200"
+              className="w-20 rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
             />
 
             <input
               type="date"
               value={task.deadline ?? ""}
               onChange={(e) => onUpdate(task.id, { deadline: e.target.value || null })}
-              className="rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-neutral-200"
+              className="rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
             />
           </div>
         </div>

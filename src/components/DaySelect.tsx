@@ -7,8 +7,7 @@ interface DaySelectProps {
   className?: string;
 }
 
-const DEFAULT_CLASSNAME =
-  "w-full rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-neutral-200";
+const DEFAULT_CLASSNAME = "w-full rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200";
 
 export function DaySelect({ value, onChange, excludeNone, className }: DaySelectProps) {
   let options = dayOptions();

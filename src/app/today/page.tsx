@@ -148,7 +148,9 @@ export default function TodayPage() {
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
-      <h1 className="mb-4 text-2xl font-bold text-neutral-100">Сьогодні</h1>
+      <h1 className="mb-4 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
+        Сьогодні
+      </h1>
 
       {todayTasks.length > 0 && (
         <div className="mb-4">
@@ -157,30 +159,30 @@ export default function TodayPage() {
           </p>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
             <div
-              className="h-full rounded-full bg-neutral-100 transition-all duration-300"
+              className="h-full rounded-full bg-accent transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
         </div>
       )}
 
-      <div className="mb-4 flex items-center gap-4 rounded-2xl border border-neutral-800 bg-neutral-900 p-4">
+      <div className="mb-4 flex items-center gap-4 rounded-2xl bg-card p-5">
         <div className="flex-1">
-          <label className="mb-1 block text-xs text-neutral-500">Початок дня</label>
+          <label className="mb-1 block text-xs text-neutral-400">Початок дня</label>
           <input
             type="time"
             value={settings.dayStart}
             onChange={(e) => updateSetting({ dayStart: e.target.value })}
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-neutral-200"
+            className="w-full rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
           />
         </div>
         <div className="flex-1">
-          <label className="mb-1 block text-xs text-neutral-500">Кінець дня</label>
+          <label className="mb-1 block text-xs text-neutral-400">Кінець дня</label>
           <input
             type="time"
             value={settings.dayEnd}
             onChange={(e) => updateSetting({ dayEnd: e.target.value })}
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-neutral-200"
+            className="w-full rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
           />
         </div>
       </div>
@@ -188,7 +190,7 @@ export default function TodayPage() {
       <button
         onClick={generatePlan}
         disabled={generating}
-        className="mb-4 w-full rounded-2xl bg-neutral-100 py-4 text-lg font-semibold text-neutral-950 disabled:opacity-40"
+        className="mb-4 w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40"
       >
         {generating ? "Складаю план..." : "Сформувати план на сьогодні"}
       </button>
@@ -208,7 +210,7 @@ export default function TodayPage() {
           </p>
           <Link
             href="/inbox"
-            className="rounded-2xl border border-neutral-700 px-6 py-3 text-base text-neutral-300"
+            className="rounded-full bg-neutral-800 px-6 py-3 text-base text-neutral-300"
           >
             Переглянути Вхідні
           </Link>
@@ -229,13 +231,13 @@ export default function TodayPage() {
       )}
 
       {pendingDelete && (
-        <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-neutral-800 px-4 py-3 shadow-lg">
-          <span className="truncate text-sm text-neutral-200">
+        <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-lg">
+          <span className="truncate text-sm text-neutral-300">
             Видалено &middot; {pendingDelete.title}
           </span>
           <button
             onClick={undoDelete}
-            className="ml-3 shrink-0 text-sm font-semibold text-neutral-100"
+            className="ml-3 shrink-0 text-sm font-semibold text-accent"
           >
             Повернути
           </button>

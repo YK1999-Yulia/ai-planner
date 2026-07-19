@@ -116,7 +116,7 @@ export default function CapturePage() {
   if (drafts) {
     return (
       <main className="min-h-dvh px-4 pb-8 pt-6">
-        <h1 className="mb-1 text-2xl font-bold text-neutral-100">
+        <h1 className="mb-1 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
           Перевір задачі
         </h1>
         <p className="mb-4 text-sm text-neutral-400">
@@ -124,7 +124,7 @@ export default function CapturePage() {
         </p>
 
         {showPreviewTip && (
-          <p className="mb-4 rounded-xl bg-neutral-900 px-4 py-3 text-sm text-neutral-400">
+          <p className="mb-4 rounded-xl bg-card px-4 py-3 text-sm text-neutral-300">
             Це ще не збережено — можна виправити назву, пріоритет, час чи
             дедлайн прямо в картці.
           </p>
@@ -134,13 +134,13 @@ export default function CapturePage() {
           {drafts.map((draft, index) => (
             <div
               key={index}
-              className="rounded-2xl border border-neutral-800 bg-neutral-900 p-4 animate-[fadeInUp_0.2s_ease-out]"
+              className="rounded-2xl bg-card p-5 animate-[fadeInUp_0.2s_ease-out]"
             >
               <div className="mb-3 flex items-start justify-between gap-2">
                 <input
                   value={draft.title}
                   onChange={(e) => updateDraft(index, { title: e.target.value })}
-                  className="flex-1 bg-transparent text-lg font-medium text-neutral-100 outline-none"
+                  className="flex-1 bg-transparent text-lg font-medium text-white outline-none"
                 />
                 <button
                   onClick={() => removeDraft(index)}
@@ -158,7 +158,7 @@ export default function CapturePage() {
                 <DaySelect
                   value={draft.scheduledDate}
                   onChange={(value) => updateDraft(index, { scheduledDate: value })}
-                  className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-neutral-200"
+                  className="w-full rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
                 />
               </div>
 
@@ -168,7 +168,7 @@ export default function CapturePage() {
                   onChange={(e) =>
                     updateDraft(index, { priority: e.target.value as Priority })
                   }
-                  className="rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-neutral-200"
+                  className="rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
                 >
                   {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -187,7 +187,7 @@ export default function CapturePage() {
                     })
                   }
                   placeholder="хв"
-                  className="w-20 rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-neutral-200"
+                  className="w-20 rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
                 />
 
                 <input
@@ -196,7 +196,7 @@ export default function CapturePage() {
                   onChange={(e) =>
                     updateDraft(index, { deadline: e.target.value || null })
                   }
-                  className="rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-neutral-200"
+                  className="rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
                 />
               </div>
             </div>
@@ -207,13 +207,13 @@ export default function CapturePage() {
           <button
             onClick={confirmDrafts}
             disabled={drafts.length === 0}
-            className="w-full rounded-2xl bg-neutral-100 py-4 text-lg font-semibold text-neutral-950 disabled:opacity-40"
+            className="w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40"
           >
             Зберегти{drafts.length > 0 ? ` (${drafts.length})` : ""}
           </button>
           <button
             onClick={() => setDrafts(null)}
-            className="w-full rounded-2xl border border-neutral-700 py-3 text-base text-neutral-300"
+            className="w-full rounded-full bg-neutral-800 py-3 text-base text-neutral-300"
           >
             Скасувати
           </button>
@@ -224,7 +224,7 @@ export default function CapturePage() {
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
-      <h1 className="mb-1 text-2xl font-bold text-neutral-100">
+      <h1 className="mb-1 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
         Що в голові?
       </h1>
       <p className="mb-4 text-sm text-neutral-400">
@@ -236,7 +236,7 @@ export default function CapturePage() {
         onChange={(e) => setText(e.target.value)}
         placeholder={EXAMPLE_TEXT}
         rows={10}
-        className="w-full resize-none rounded-2xl border border-neutral-800 bg-neutral-900 p-4 text-base text-neutral-100 outline-none placeholder:text-neutral-600"
+        className="w-full resize-none rounded-2xl bg-card p-5 text-base text-white outline-none placeholder:text-neutral-500"
       />
 
       {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
@@ -245,7 +245,7 @@ export default function CapturePage() {
         <button
           onClick={handleSubmit}
           disabled={!text.trim() || loading}
-          className="w-full rounded-2xl bg-neutral-100 py-4 text-lg font-semibold text-neutral-950 disabled:opacity-40"
+          className="w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40"
         >
           {loading ? "Розбираю..." : "Розібрати"}
         </button>
@@ -253,7 +253,7 @@ export default function CapturePage() {
           <button
             onClick={handleTryExample}
             disabled={loading}
-            className="w-full rounded-2xl border border-neutral-700 py-3 text-base text-neutral-300"
+            className="w-full rounded-full bg-neutral-800 py-3 text-base text-neutral-300"
           >
             Спробувати з прикладом
           </button>
