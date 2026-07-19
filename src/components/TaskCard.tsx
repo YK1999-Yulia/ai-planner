@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PRIORITY_LABELS, PRIORITY_CHIP_STYLES } from "@/lib/priority";
+import { PRIORITY_LABELS, PRIORITY_CHIP_STYLES, PRIORITY_STRIPE_COLORS } from "@/lib/priority";
 import { formatDaysUntil } from "@/lib/format";
 import { DaySelect } from "@/components/DaySelect";
 import type { Priority, Task } from "@/lib/types";
@@ -32,10 +32,12 @@ export function TaskCard({
   const [expanded, setExpanded] = useState(false);
   const isDone = task.completedAt !== null;
   const deadlineInfo = task.deadline ? formatDaysUntil(task.deadline) : null;
+  const isOverdue = Boolean(overdueLabel) || deadlineInfo?.tone === "overdue";
+  const stripeColor = isOverdue ? "border-l-red-500" : PRIORITY_STRIPE_COLORS[task.priority];
 
   return (
     <div
-      className={`rounded-2xl bg-card animate-[fadeInUp_0.2s_ease-out] ${
+      className={`rounded-2xl border-l-4 bg-card animate-[fadeInUp_0.2s_ease-out] ${stripeColor} ${
         compact ? "p-3" : "p-5"
       } ${isDone ? "opacity-50" : compact ? "opacity-70" : ""}`}
     >

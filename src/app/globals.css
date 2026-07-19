@@ -6,6 +6,13 @@
   --color-card-hover: #3a3a3a;
   --color-accent: #b5cff8;
   --color-accent-foreground: #1b1b1b;
+
+  /* Priority palette — deliberately separate from --color-accent so
+     urgency and app-chrome never visually mix. */
+  --color-priority-high: #ff6b6b;
+  --color-priority-medium: #ffd166;
+  --color-priority-low: #a9bdd4;
+  --color-priority-foreground: #1b1b1b;
 }
 
 @keyframes fadeInUp {

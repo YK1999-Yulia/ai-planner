@@ -15,10 +15,21 @@ export const PRIORITY_COLORS: Record<Priority, string> = {
   none: "text-neutral-500",
 };
 
-/** Filled pill-chip style: high priority uses the app accent, others keep a small color cue. */
+/**
+ * Filled pill-chip style. Own palette, deliberately separate from the
+ * app accent (#b5cff8), so priority never gets mistaken for app chrome.
+ */
 export const PRIORITY_CHIP_STYLES: Record<Priority, string> = {
-  high: "bg-accent text-accent-foreground",
-  medium: "bg-amber-300 text-amber-950",
-  low: "bg-neutral-700 text-neutral-200",
+  high: "bg-priority-high text-priority-foreground",
+  medium: "bg-priority-medium text-priority-foreground",
+  low: "bg-priority-low text-priority-foreground",
   none: "bg-neutral-800 text-neutral-500",
+};
+
+/** Left-border stripe color per priority; low/none get no stripe. */
+export const PRIORITY_STRIPE_COLORS: Record<Priority, string> = {
+  high: "border-l-priority-high",
+  medium: "border-l-priority-medium",
+  low: "border-l-transparent",
+  none: "border-l-transparent",
 };
