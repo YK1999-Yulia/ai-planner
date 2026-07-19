@@ -129,10 +129,27 @@ export default function TodayPage() {
   });
 
   const overflow = cursor > settings.dayEnd;
+  const doneCount = todayTasks.filter((t) => t.completedAt !== null).length;
+  const progressPercent =
+    todayTasks.length > 0 ? Math.round((doneCount / todayTasks.length) * 100) : 0;
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
       <h1 className="mb-4 text-2xl font-semibold text-neutral-100">Сьогодні</h1>
+
+      {todayTasks.length > 0 && (
+        <div className="mb-4">
+          <p className="mb-1.5 text-sm text-neutral-300">
+            {doneCount} з {todayTasks.length} виконано
+          </p>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
+            <div
+              className="h-full rounded-full bg-neutral-100 transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="mb-4 flex items-center gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-4">
         <div className="flex-1">
@@ -191,7 +208,9 @@ export default function TodayPage() {
             return (
               <div
                 key={task.id}
-                className="flex items-start gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-4"
+                className={`flex items-start gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-4 ${
+                  done ? "opacity-50" : ""
+                }`}
               >
                 <button
                   onClick={() => toggleDone(task)}
