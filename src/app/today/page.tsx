@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { loadTasks, updateTask } from "@/lib/tasks-storage";
+import {
+  subscribeTasks,
+  getTasksSnapshot,
+  getTasksServerSnapshot,
+  updateTaskById,
+} from "@/lib/tasks-store";
 import { loadSettings, saveSettings, type DaySettings } from "@/lib/settings-storage";
 import { hasGeneratedPlan, markPlanGenerated } from "@/lib/today-plan-storage";
 import {
@@ -29,8 +34,12 @@ function addMinutes(time: string, minutes: number): string {
 }
 
 export default function TodayPage() {
-  const [allTasks, setAllTasks] = useState<Task[] | null>(null);
-  const [settings, setSettings] = useState<DaySettings | null>(null);
+  const allTasks = useSyncExternalStore(
+    subscribeTasks,
+    getTasksSnapshot,
+    getTasksServerSnapshot,
+  );
+  const [settings, setSettings] = useState<DaySettings>(() => loadSettings());
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pendingDelete = useSyncExternalStore(
@@ -39,19 +48,9 @@ export default function TodayPage() {
     getPendingDeleteServerSnapshot,
   );
 
-  useEffect(() => {
-    setAllTasks(loadTasks());
-    setSettings(loadSettings());
-    return subscribeDelete(() => setAllTasks(loadTasks()));
-  }, []);
-
-  function refresh() {
-    setAllTasks(loadTasks());
-  }
-
   function updateSetting(patch: Partial<DaySettings>) {
     setSettings((prev) => {
-      const next = { ...(prev as DaySettings), ...patch };
+      const next = { ...prev, ...patch };
       saveSettings(next);
       return next;
     });
@@ -59,13 +58,11 @@ export default function TodayPage() {
 
   function toggleDone(task: Task) {
     const done = task.completedAt !== null;
-    updateTask(task.id, { completedAt: done ? null : new Date().toISOString() });
-    refresh();
+    updateTaskById(task.id, { completedAt: done ? null : new Date().toISOString() });
   }
 
   function update(id: string, patch: Partial<Task>) {
-    updateTask(id, patch);
-    refresh();
+    updateTaskById(id, patch);
   }
 
   function remove(task: Task) {
@@ -77,7 +74,6 @@ export default function TodayPage() {
   }
 
   async function generatePlan() {
-    if (!settings || !allTasks) return;
     const today = todayString();
     const todayAll = allTasks.filter((t) => t.scheduledDate === today);
     const overdueUndone = allTasks.filter(
@@ -117,23 +113,18 @@ export default function TodayPage() {
       }
 
       (data.orderedTaskIds as string[]).forEach((id, index) => {
-        updateTask(id, {
+        updateTaskById(id, {
           position: index,
           ...(overdueIds.has(id) ? { scheduledDate: today } : {}),
         });
       });
 
       markPlanGenerated(today);
-      refresh();
     } catch {
       setError("Не вдалося зв'язатися з сервером");
     } finally {
       setGenerating(false);
     }
-  }
-
-  if (allTasks === null || settings === null) {
-    return null;
   }
 
   const today = todayString();

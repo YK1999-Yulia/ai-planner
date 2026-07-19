@@ -1,5 +1,5 @@
 import type { Task } from "./types";
-import { deleteTask } from "./tasks-storage";
+import { deleteTaskById } from "./tasks-store";
 
 const DELETE_DELAY_MS = 3500;
 
@@ -30,10 +30,10 @@ export function getPendingDeleteServerSnapshot(): Task | null {
 export function scheduleDelete(task: Task) {
   if (pending) {
     clearTimeout(pending.timeoutId);
-    deleteTask(pending.task.id);
+    deleteTaskById(pending.task.id);
   }
   const timeoutId = setTimeout(() => {
-    deleteTask(task.id);
+    deleteTaskById(task.id);
     pending = null;
     emit();
   }, DELETE_DELAY_MS);

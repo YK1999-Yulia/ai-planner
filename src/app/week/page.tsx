@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { loadTasks, updateTask } from "@/lib/tasks-storage";
+import {
+  subscribeTasks,
+  getTasksSnapshot,
+  getTasksServerSnapshot,
+  updateTaskById,
+} from "@/lib/tasks-store";
 import {
   subscribeDelete,
   getPendingDelete,
@@ -56,9 +61,17 @@ interface PreviewRow {
 }
 
 export default function WeekPage() {
-  const [allTasks, setAllTasks] = useState<Task[] | null>(null);
+  const allTasks = useSyncExternalStore(
+    subscribeTasks,
+    getTasksSnapshot,
+    getTasksServerSnapshot,
+  );
   const [weekOffset, setWeekOffset] = useState(0);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const dates = weekDates(0);
+    const today = todayString();
+    return dates.includes(today) ? today : dates[0];
+  });
   const [distributing, setDistributing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewRow[] | null>(null);
@@ -69,29 +82,18 @@ export default function WeekPage() {
   );
 
   useEffect(() => {
-    setAllTasks(loadTasks());
-    return subscribeDelete(() => setAllTasks(loadTasks()));
-  }, []);
-
-  useEffect(() => {
     const dates = weekDates(weekOffset);
     const today = todayString();
     setSelectedDate(dates.includes(today) ? today : dates[0]);
   }, [weekOffset]);
 
-  function refresh() {
-    setAllTasks(loadTasks());
-  }
-
   function toggleDone(task: Task) {
     const done = task.completedAt !== null;
-    updateTask(task.id, { completedAt: done ? null : new Date().toISOString() });
-    refresh();
+    updateTaskById(task.id, { completedAt: done ? null : new Date().toISOString() });
   }
 
   function update(id: string, patch: Partial<Task>) {
-    updateTask(id, patch);
-    refresh();
+    updateTaskById(id, patch);
   }
 
   function remove(task: Task) {
@@ -103,7 +105,6 @@ export default function WeekPage() {
   }
 
   async function distributeWeek() {
-    if (!allTasks) return;
     const dates = weekDates(weekOffset);
     const candidates = allTasks.filter(
       (t) => t.scheduledDate === null && t.completedAt === null,
@@ -179,14 +180,9 @@ export default function WeekPage() {
   function confirmPreview() {
     if (!preview) return;
     for (const row of preview) {
-      updateTask(row.id, { scheduledDate: row.scheduledDate });
+      updateTaskById(row.id, { scheduledDate: row.scheduledDate });
     }
     setPreview(null);
-    refresh();
-  }
-
-  if (allTasks === null || selectedDate === null) {
-    return null;
   }
 
   const dates = weekDates(weekOffset);

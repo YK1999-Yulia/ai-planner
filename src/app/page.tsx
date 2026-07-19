@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { addTasks, loadTasks } from "@/lib/tasks-storage";
+import { addTasks, getTasksSnapshot } from "@/lib/tasks-store";
 import { PRIORITY_LABELS } from "@/lib/priority";
 import { hasSeenWelcome, markWelcomeSeen, hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
@@ -23,7 +23,7 @@ export default function CapturePage() {
 
   useEffect(() => {
     const forced = new URLSearchParams(window.location.search).get("welcome") === "1";
-    const isNewUser = !hasSeenWelcome() && loadTasks().length === 0;
+    const isNewUser = !hasSeenWelcome() && getTasksSnapshot().length === 0;
     setWelcomeSeen(!(forced || isNewUser));
   }, []);
 

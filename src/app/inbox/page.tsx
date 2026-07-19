@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { loadTasks, updateTask } from "@/lib/tasks-storage";
+import {
+  subscribeTasks,
+  getTasksSnapshot,
+  getTasksServerSnapshot,
+  updateTaskById,
+} from "@/lib/tasks-store";
 import {
   subscribeDelete,
   getPendingDelete,
@@ -34,12 +39,12 @@ function sortDone(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => (b.completedAt ?? "").localeCompare(a.completedAt ?? ""));
 }
 
-function loadInboxTasks(): Task[] {
-  return loadTasks().filter((t) => t.scheduledDate === null);
-}
-
 export default function InboxPage() {
-  const [tasks, setTasks] = useState<Task[] | null>(null);
+  const allTasks = useSyncExternalStore(
+    subscribeTasks,
+    getTasksSnapshot,
+    getTasksServerSnapshot,
+  );
   const [doneExpanded, setDoneExpanded] = useState(false);
   const pendingDelete = useSyncExternalStore(
     subscribeDelete,
@@ -47,20 +52,15 @@ export default function InboxPage() {
     getPendingDeleteServerSnapshot,
   );
 
-  useEffect(() => {
-    setTasks(loadInboxTasks());
-    return subscribeDelete(() => setTasks(loadInboxTasks()));
-  }, []);
+  const tasks = allTasks.filter((t) => t.scheduledDate === null);
 
   function toggleDone(task: Task) {
     const done = task.completedAt !== null;
-    updateTask(task.id, { completedAt: done ? null : new Date().toISOString() });
-    setTasks(loadInboxTasks());
+    updateTaskById(task.id, { completedAt: done ? null : new Date().toISOString() });
   }
 
   function update(id: string, patch: Partial<Task>) {
-    updateTask(id, patch);
-    setTasks(loadInboxTasks());
+    updateTaskById(id, patch);
   }
 
   function remove(task: Task) {
@@ -69,10 +69,6 @@ export default function InboxPage() {
 
   function undoDelete() {
     undoPendingDelete();
-  }
-
-  if (tasks === null) {
-    return null;
   }
 
   if (tasks.length === 0) {
