@@ -316,7 +316,7 @@ export default function WeekPage() {
       </div>
 
       <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2 className="text-base font-semibold text-white">
+        <h2 className="font-[family-name:var(--font-heading)] text-base font-bold text-white">
           {WEEKDAY_FULL[weekdayIndex(selectedDate)]}
           {selectedDate === today && (
             <span className="ml-2 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
