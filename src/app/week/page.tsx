@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   subscribeTasks,
   getTasksSnapshot,
@@ -21,7 +21,6 @@ import {
   todayString,
   formatWeekRangeLabel,
   WEEKDAY_SHORT,
-  WEEKDAY_FULL,
   weekdayIndex,
 } from "@/lib/date";
 import type { Priority, Task } from "@/lib/types";
@@ -33,7 +32,7 @@ const PRIORITY_RANK: Record<Priority, number> = {
   none: 3,
 };
 
-function sortDay(tasks: Task[]): Task[] {
+function sortByPriority(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => {
     const rankDiff = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
     if (rankDiff !== 0) return rankDiff;
@@ -41,17 +40,12 @@ function sortDay(tasks: Task[]): Task[] {
   });
 }
 
-function pluralTasks(n: number): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return "задача";
-  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return "задачі";
-  return "задач";
-}
-
-function formatHours(totalMinutes: number): string {
-  const hours = totalMinutes / 60;
-  return Number.isInteger(hours) ? `${hours}` : hours.toFixed(1);
+function sortByDay(tasks: Task[]): Task[] {
+  return [...tasks].sort((a, b) => {
+    const dayDiff = (a.scheduledDate as string).localeCompare(b.scheduledDate as string);
+    if (dayDiff !== 0) return dayDiff;
+    return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+  });
 }
 
 interface PreviewRow {
@@ -67,11 +61,7 @@ export default function WeekPage() {
     getTasksServerSnapshot,
   );
   const [weekOffset, setWeekOffset] = useState(0);
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    const dates = weekDates(0);
-    const today = todayString();
-    return dates.includes(today) ? today : dates[0];
-  });
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [distributing, setDistributing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewRow[] | null>(null);
@@ -80,12 +70,6 @@ export default function WeekPage() {
     getPendingDelete,
     getPendingDeleteServerSnapshot,
   );
-
-  useEffect(() => {
-    const dates = weekDates(weekOffset);
-    const today = todayString();
-    setSelectedDate(dates.includes(today) ? today : dates[0]);
-  }, [weekOffset]);
 
   function toggleDone(task: Task) {
     const done = task.completedAt !== null;
@@ -102,6 +86,10 @@ export default function WeekPage() {
 
   function undoDelete() {
     undoPendingDelete();
+  }
+
+  function selectDay(date: string) {
+    setSelectedDate((prev) => (prev === date ? null : date));
   }
 
   async function distributeWeek() {
@@ -122,7 +110,10 @@ export default function WeekPage() {
       return {
         date,
         taskCount: dayTasks.length,
-        minutes: dayTasks.reduce((sum, t) => sum + ((t.estimatedMinutes && t.estimatedMinutes > 0 ? t.estimatedMinutes : 30)), 0),
+        minutes: dayTasks.reduce(
+          (sum, t) => sum + (t.estimatedMinutes && t.estimatedMinutes > 0 ? t.estimatedMinutes : 30),
+          0,
+        ),
       };
     });
 
@@ -234,11 +225,17 @@ export default function WeekPage() {
     );
   }
 
-  const dayTasks = sortDay(visibleTasks.filter((t) => t.scheduledDate === selectedDate));
-  const activeCount = dayTasks.filter((t) => t.completedAt === null).length;
-  const minutes = dayTasks
-    .filter((t) => t.completedAt === null)
-    .reduce((sum, t) => sum + ((t.estimatedMinutes && t.estimatedMinutes > 0 ? t.estimatedMinutes : 30)), 0);
+  const todayTasks = sortByPriority(
+    visibleTasks.filter((t) => t.scheduledDate === today && t.completedAt === null),
+  );
+
+  let weekListTasks = visibleTasks.filter(
+    (t) => t.scheduledDate !== null && t.scheduledDate !== today && dates.includes(t.scheduledDate) && t.completedAt === null,
+  );
+  if (selectedDate) {
+    weekListTasks = weekListTasks.filter((t) => t.scheduledDate === selectedDate);
+  }
+  weekListTasks = sortByDay(weekListTasks);
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
@@ -289,7 +286,7 @@ export default function WeekPage() {
           return (
             <button
               key={date}
-              onClick={() => setSelectedDate(date)}
+              onClick={() => selectDay(date)}
               className={`flex flex-col items-center gap-1 rounded-xl py-2 transition-colors duration-150 ${
                 isSelected
                   ? "bg-accent text-accent-foreground"
@@ -315,35 +312,48 @@ export default function WeekPage() {
         })}
       </div>
 
-      <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2 className="font-[family-name:var(--font-heading)] text-base font-bold text-white">
-          {WEEKDAY_FULL[weekdayIndex(selectedDate)]}
-          {selectedDate === today && (
-            <span className="ml-2 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
-              сьогодні
-            </span>
-          )}
+      <div className="mb-6">
+        <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-white">
+          Сьогодні
         </h2>
-        {dayTasks.length > 0 && (
-          <span className="text-xs text-neutral-500">
-            {activeCount} {pluralTasks(activeCount)} &middot; {formatHours(minutes)} год
-          </span>
+        {todayTasks.length === 0 ? (
+          <p className="text-sm text-neutral-400">
+            На сьогодні нічого не заплановано. Тапни день у стрічці або розклади
+            тиждень 👆
+          </p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {todayTasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onToggleDone={toggleDone}
+                onDelete={remove}
+                onUpdate={update}
+              />
+            ))}
+          </div>
         )}
       </div>
 
-      {dayTasks.length === 0 ? (
-        <p className="px-1 text-sm text-neutral-600">Немає задач на цей день</p>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {dayTasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onToggleDone={toggleDone}
-              onDelete={remove}
-              onUpdate={update}
-            />
-          ))}
+      {weekListTasks.length > 0 && (
+        <div>
+          <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-white">
+            Задачі цього тижня
+          </h2>
+          <div className="flex flex-col gap-3">
+            {weekListTasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                compact
+                dayLabel={WEEKDAY_SHORT[weekdayIndex(task.scheduledDate as string)]}
+                onToggleDone={toggleDone}
+                onDelete={remove}
+                onUpdate={update}
+              />
+            ))}
+          </div>
         </div>
       )}
 
