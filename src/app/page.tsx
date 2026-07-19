@@ -132,7 +132,7 @@ export default function CapturePage() {
           {drafts.map((draft, index) => (
             <div
               key={index}
-              className="rounded-2xl border border-neutral-800 bg-neutral-900 p-4"
+              className="rounded-2xl border border-neutral-800 bg-neutral-900 p-4 animate-[fadeInUp_0.2s_ease-out]"
             >
               <div className="mb-3 flex items-start justify-between gap-2">
                 <input

@@ -101,14 +101,14 @@ export default function InboxPage() {
     return (
       <div
         key={task.id}
-        className="flex items-start gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-4"
+        className="flex items-start gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-4 animate-[fadeInUp_0.2s_ease-out]"
       >
         <button
           onClick={() => toggleDone(task)}
           aria-label={isDone ? "Позначити невиконаною" : "Позначити виконаною"}
-          className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+          className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-150 ${
             isDone
-              ? "border-neutral-500 bg-neutral-500 text-neutral-950"
+              ? "border-neutral-500 bg-neutral-500 text-neutral-950 animate-[checkPop_0.25s_ease-out]"
               : "border-neutral-600"
           }`}
         >
