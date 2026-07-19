@@ -1,0 +1,115 @@
+import Anthropic from "@anthropic-ai/sdk";
+import { NextRequest, NextResponse } from "next/server";
+
+interface CandidateTask {
+  id: string;
+  title: string;
+  priority: string;
+  estimatedMinutes: number | null;
+  deadline: string | null;
+}
+
+const planTodayTool = {
+  name: "record_plan",
+  description: "Записати впорядкований список id обраних задач для плану на сьогодні.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      ordered_task_ids: {
+        type: "array",
+        items: { type: "string" },
+        description: "Id задач у порядку, в якому їх варто виконувати сьогодні.",
+      },
+    },
+    required: ["ordered_task_ids"],
+  },
+};
+
+function minutesBetween(start: string, end: string): number {
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  return eh * 60 + em - (sh * 60 + sm);
+}
+
+export async function POST(request: NextRequest) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+
+  if (!apiKey) {
+    return NextResponse.json(
+      { ok: false, error: "ANTHROPIC_API_KEY не налаштовано на сервері" },
+      { status: 500 },
+    );
+  }
+
+  const body = await request.json().catch(() => null);
+  const tasks: CandidateTask[] = Array.isArray(body?.tasks) ? body.tasks : [];
+  const dayStart = typeof body?.dayStart === "string" ? body.dayStart : "09:00";
+  const dayEnd = typeof body?.dayEnd === "string" ? body.dayEnd : "18:00";
+
+  if (tasks.length === 0) {
+    return NextResponse.json({ ok: true, orderedTaskIds: [] });
+  }
+
+  const availableMinutes = Math.max(minutesBetween(dayStart, dayEnd), 0);
+  const today = new Date().toISOString().slice(0, 10);
+
+  const taskLines = tasks
+    .map(
+      (t) =>
+        `- id: ${t.id} | назва: ${t.title} | пріоритет: ${t.priority} | час: ${
+          t.estimatedMinutes ?? "невідомо"
+        } хв | дедлайн: ${t.deadline ?? "немає"}`,
+    )
+    .join("\n");
+
+  const systemPrompt = `Ти асистент, який складає реалістичний план дня з наявних задач.
+Сьогоднішня дата: ${today}.
+Робочий день: з ${dayStart} до ${dayEnd} (це приблизно ${availableMinutes} хвилин).
+
+Список задач-кандидатів:
+${taskLines}
+
+Правила:
+- Обери підмножину задач, сумарний орієнтовний час яких реалістично поміщається в доступні хвилини робочого дня. Не бери всі задачі, якщо вони туди не влазять.
+- Пріоритетнішими для включення є задачі з вищим пріоритетом (high) і задачі з ближчим дедлайном.
+- Впорядкуй обрані id так, як їх розумно виконувати протягом дня (наприклад, терміновіші й важливіші — раніше).
+- Використовуй лише id зі списку вище, нічого не вигадуй.
+- Якщо жодна задача не підходить (наприклад, немає жодної або доступного часу 0), поверни порожній список.`;
+
+  try {
+    const anthropic = new Anthropic({ apiKey });
+
+    const message = await anthropic.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages: [{ role: "user", content: "Склади план на сьогодні." }],
+      tools: [planTodayTool],
+      tool_choice: { type: "tool", name: "record_plan" },
+    });
+
+    const toolUse = message.content.find(
+      (block) => block.type === "tool_use" && block.name === "record_plan",
+    );
+
+    if (!toolUse || toolUse.type !== "tool_use") {
+      return NextResponse.json(
+        { ok: false, error: "AI не повернув план" },
+        { status: 502 },
+      );
+    }
+
+    const input = toolUse.input as { ordered_task_ids?: unknown[] };
+    const validIds = new Set(tasks.map((t) => t.id));
+    const orderedTaskIds = (
+      Array.isArray(input.ordered_task_ids) ? input.ordered_task_ids : []
+    ).filter((id): id is string => typeof id === "string" && validIds.has(id));
+
+    return NextResponse.json({ ok: true, orderedTaskIds });
+  } catch (error) {
+    return NextResponse.json(
+      { ok: false, error: error instanceof Error ? error.message : "Невідома помилка" },
+      { status: 500 },
+    );
+  }
+}

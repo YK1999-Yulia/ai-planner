@@ -3,38 +3,25 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { loadTasks, updateTask, deleteTask } from "@/lib/tasks-storage";
-import type { Priority, Task } from "@/lib/types";
-
-const PRIORITY_LABELS: Record<Priority, string> = {
-  high: "Високий",
-  medium: "Середній",
-  low: "Низький",
-  none: "Без пріоритету",
-};
-
-const PRIORITY_COLORS: Record<Priority, string> = {
-  high: "text-red-400",
-  medium: "text-amber-400",
-  low: "text-sky-400",
-  none: "text-neutral-500",
-};
+import { PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/priority";
+import type { Task } from "@/lib/types";
 
 export default function InboxPage() {
   const [tasks, setTasks] = useState<Task[] | null>(null);
 
   useEffect(() => {
-    setTasks(loadTasks());
+    setTasks(loadTasks().filter((t) => t.status === "inbox"));
   }, []);
 
   function toggleDone(task: Task) {
     const done = task.completedAt !== null;
     updateTask(task.id, { completedAt: done ? null : new Date().toISOString() });
-    setTasks(loadTasks());
+    setTasks(loadTasks().filter((t) => t.status === "inbox"));
   }
 
   function remove(task: Task) {
     deleteTask(task.id);
-    setTasks(loadTasks());
+    setTasks(loadTasks().filter((t) => t.status === "inbox"));
   }
 
   if (tasks === null) {

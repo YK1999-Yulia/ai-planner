@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/", label: "Занотувати" },
   { href: "/inbox", label: "Вхідні" },
+  { href: "/today", label: "Сьогодні" },
 ];
 
 export function BottomNav() {

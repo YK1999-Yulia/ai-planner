@@ -3,17 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addTasks } from "@/lib/tasks-storage";
+import { PRIORITY_LABELS } from "@/lib/priority";
 import type { ParsedTaskDraft, Priority, Task } from "@/lib/types";
 
 const EXAMPLE_TEXT =
   "Купити молоко і хліб, подзвонити мамі до вечора, доробити презентацію для клієнта до п'ятниці, записатись до лікаря";
-
-const PRIORITY_LABELS: Record<Priority, string> = {
-  high: "Високий",
-  medium: "Середній",
-  low: "Низький",
-  none: "Без пріоритету",
-};
 
 export default function CapturePage() {
   const router = useRouter();
