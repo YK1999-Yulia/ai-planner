@@ -74,7 +74,7 @@ export default function InboxPage() {
   if (tasks.length === 0) {
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center px-6 pb-8 text-center">
-        <h1 className="mb-2 text-2xl font-semibold text-neutral-100">
+        <h1 className="mb-2 text-2xl font-bold text-neutral-100">
           Тут порожньо
         </h1>
         <p className="mb-6 text-neutral-400">
@@ -149,9 +149,9 @@ export default function InboxPage() {
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
-      <h1 className="mb-4 text-2xl font-semibold text-neutral-100">Вхідні</h1>
+      <h1 className="mb-4 text-2xl font-bold text-neutral-100">Вхідні</h1>
 
-      <div className="flex flex-col gap-3">{active.map(renderTask)}</div>
+      <div className="flex flex-col gap-4">{active.map(renderTask)}</div>
 
       {done.length > 0 && (
         <div className="mt-6">
@@ -163,7 +163,7 @@ export default function InboxPage() {
             <span className={doneExpanded ? "rotate-180" : ""}>⌄</span>
           </button>
           {doneExpanded && (
-            <div className="mt-2 flex flex-col gap-3">{done.map(renderTask)}</div>
+            <div className="mt-2 flex flex-col gap-4">{done.map(renderTask)}</div>
           )}
         </div>
       )}

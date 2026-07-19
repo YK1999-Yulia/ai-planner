@@ -1,7 +1,7 @@
 export function WelcomeScreen({ onStart }: { onStart: () => void }) {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
-      <h1 className="mb-3 text-3xl font-semibold tracking-tight text-neutral-100">
+      <h1 className="mb-4 text-3xl font-bold tracking-tight text-neutral-100">
         AI Планер
       </h1>
       <p className="mb-8 text-lg text-neutral-400">

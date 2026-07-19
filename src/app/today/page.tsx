@@ -136,11 +136,11 @@ export default function TodayPage() {
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
-      <h1 className="mb-4 text-2xl font-semibold text-neutral-100">Сьогодні</h1>
+      <h1 className="mb-4 text-2xl font-bold text-neutral-100">Сьогодні</h1>
 
       {todayTasks.length > 0 && (
         <div className="mb-4">
-          <p className="mb-1.5 text-sm text-neutral-300">
+          <p className="mb-2 text-sm text-neutral-300">
             {doneCount} з {todayTasks.length} виконано
           </p>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
@@ -152,7 +152,7 @@ export default function TodayPage() {
         </div>
       )}
 
-      <div className="mb-4 flex items-center gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-4">
+      <div className="mb-4 flex items-center gap-4 rounded-2xl border border-neutral-800 bg-neutral-900 p-4">
         <div className="flex-1">
           <label className="mb-1 block text-xs text-neutral-500">Початок дня</label>
           <input
@@ -203,7 +203,7 @@ export default function TodayPage() {
           </Link>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           {withTimes.map(({ task, start }) => {
             const done = task.completedAt !== null;
             const deadlineInfo = task.deadline ? formatDeadline(task.deadline) : null;
@@ -217,7 +217,7 @@ export default function TodayPage() {
                 <button
                   onClick={() => toggleDone(task)}
                   aria-label={done ? "Позначити невиконаною" : "Позначити виконаною"}
-                  className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-150 ${
+                  className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-150 ${
                     done
                       ? "border-neutral-500 bg-neutral-500 text-neutral-950 animate-[checkPop_0.25s_ease-out]"
                       : "border-neutral-600"

@@ -114,7 +114,7 @@ export default function CapturePage() {
   if (drafts) {
     return (
       <main className="min-h-dvh px-4 pb-8 pt-6">
-        <h1 className="mb-1 text-2xl font-semibold text-neutral-100">
+        <h1 className="mb-1 text-2xl font-bold text-neutral-100">
           Перевір задачі
         </h1>
         <p className="mb-4 text-sm text-neutral-400">
@@ -128,7 +128,7 @@ export default function CapturePage() {
           </p>
         )}
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           {drafts.map((draft, index) => (
             <div
               key={index}
@@ -143,7 +143,7 @@ export default function CapturePage() {
                 <button
                   onClick={() => removeDraft(index)}
                   aria-label="Видалити задачу"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xl text-neutral-500"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-neutral-500"
                 >
                   ✕
                 </button>
@@ -211,7 +211,7 @@ export default function CapturePage() {
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
-      <h1 className="mb-1 text-2xl font-semibold text-neutral-100">
+      <h1 className="mb-1 text-2xl font-bold text-neutral-100">
         Що в голові?
       </h1>
       <p className="mb-4 text-sm text-neutral-400">
