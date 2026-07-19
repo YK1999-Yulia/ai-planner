@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { loadTasks, updateTask, deleteTask } from "@/lib/tasks-storage";
 import { TaskCard } from "@/components/TaskCard";
+import { DaySelect } from "@/components/DaySelect";
 import {
-  currentWeekDates,
+  weekDates,
   todayString,
+  formatWeekRangeLabel,
+  WEEKDAY_SHORT,
   WEEKDAY_FULL,
   weekdayIndex,
-  dayOptions,
 } from "@/lib/date";
 import type { Priority, Task } from "@/lib/types";
 
@@ -50,6 +52,8 @@ const DELETE_DELAY_MS = 3500;
 
 export default function WeekPage() {
   const [allTasks, setAllTasks] = useState<Task[] | null>(null);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [distributing, setDistributing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewRow[] | null>(null);
@@ -62,6 +66,12 @@ export default function WeekPage() {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    const dates = weekDates(weekOffset);
+    const today = todayString();
+    setSelectedDate(dates.includes(today) ? today : dates[0]);
+  }, [weekOffset]);
 
   function refresh() {
     setAllTasks(loadTasks());
@@ -98,7 +108,7 @@ export default function WeekPage() {
 
   async function distributeWeek() {
     if (!allTasks) return;
-    const weekDates = currentWeekDates();
+    const dates = weekDates(weekOffset);
     const candidates = allTasks.filter(
       (t) => t.scheduledDate === null && t.completedAt === null,
     );
@@ -108,7 +118,7 @@ export default function WeekPage() {
       return;
     }
 
-    const existingLoad = weekDates.map((date) => {
+    const existingLoad = dates.map((date) => {
       const dayTasks = allTasks.filter(
         (t) => t.scheduledDate === date && t.completedAt === null,
       );
@@ -133,7 +143,7 @@ export default function WeekPage() {
             estimatedMinutes: t.estimatedMinutes,
             deadline: t.deadline,
           })),
-          weekDates,
+          weekDates: dates,
           existingLoad,
           today: todayString(),
         }),
@@ -162,9 +172,11 @@ export default function WeekPage() {
     }
   }
 
-  function updatePreviewRow(id: string, scheduledDate: string) {
+  function updatePreviewRow(id: string, scheduledDate: string | null) {
     setPreview((prev) =>
-      prev ? prev.map((r) => (r.id === id ? { ...r, scheduledDate } : r)) : prev,
+      prev
+        ? prev.map((r) => (r.id === id ? { ...r, scheduledDate: scheduledDate ?? r.scheduledDate } : r))
+        : prev,
     );
   }
 
@@ -177,18 +189,13 @@ export default function WeekPage() {
     refresh();
   }
 
-  if (allTasks === null) {
+  if (allTasks === null || selectedDate === null) {
     return null;
   }
 
-  const weekDates = currentWeekDates();
+  const dates = weekDates(weekOffset);
   const today = todayString();
-  const weekOptions = dayOptions();
   const visibleTasks = allTasks.filter((t) => t.id !== pendingDelete?.id);
-
-  const hasAnyScheduled = weekDates.some((date) =>
-    visibleTasks.some((t) => t.scheduledDate === date),
-  );
 
   if (preview) {
     return (
@@ -205,19 +212,12 @@ export default function WeekPage() {
               className="flex items-center justify-between gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-4 animate-[fadeInUp_0.2s_ease-out]"
             >
               <span className="flex-1 text-base text-neutral-100">{row.title}</span>
-              <select
+              <DaySelect
                 value={row.scheduledDate}
-                onChange={(e) => updatePreviewRow(row.id, e.target.value)}
+                onChange={(value) => updatePreviewRow(row.id, value)}
+                excludeNone
                 className="rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-sm text-neutral-200"
-              >
-                {weekOptions
-                  .filter((o) => o.value !== null)
-                  .map((o) => (
-                    <option key={o.value} value={o.value as string}>
-                      {o.label}
-                    </option>
-                  ))}
-              </select>
+              />
             </div>
           ))}
         </div>
@@ -240,6 +240,12 @@ export default function WeekPage() {
     );
   }
 
+  const dayTasks = sortDay(visibleTasks.filter((t) => t.scheduledDate === selectedDate));
+  const activeCount = dayTasks.filter((t) => t.completedAt === null).length;
+  const minutes = dayTasks
+    .filter((t) => t.completedAt === null)
+    .reduce((sum, t) => sum + (t.estimatedMinutes ?? 30), 0);
+
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
       <h1 className="mb-4 text-2xl font-bold text-neutral-100">Тиждень</h1>
@@ -254,67 +260,94 @@ export default function WeekPage() {
 
       {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
 
-      {!hasAnyScheduled ? (
-        <p className="py-10 text-center text-neutral-400">
-          Тиждень порожній. Натисни &laquo;Розподілити тиждень&raquo; — я розкладу
-          задачі за тебе.
-        </p>
+      <div className="mb-3 flex items-center justify-between">
+        <button
+          onClick={() => setWeekOffset((o) => Math.max(0, o - 1))}
+          disabled={weekOffset === 0}
+          aria-label="Попередній тиждень"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-lg text-neutral-400 disabled:opacity-30"
+        >
+          ←
+        </button>
+        <span className="text-sm font-medium text-neutral-300">
+          {formatWeekRangeLabel(dates)}
+        </span>
+        <button
+          onClick={() => setWeekOffset((o) => o + 1)}
+          aria-label="Наступний тиждень"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-lg text-neutral-400"
+        >
+          →
+        </button>
+      </div>
+
+      <div className="mb-6 grid grid-cols-7 gap-1">
+        {dates.map((date) => {
+          const isToday = date === today;
+          const isSelected = date === selectedDate;
+          const count = visibleTasks.filter(
+            (t) => t.scheduledDate === date && t.completedAt === null,
+          ).length;
+          const dayNum = Number(date.split("-")[2]);
+
+          return (
+            <button
+              key={date}
+              onClick={() => setSelectedDate(date)}
+              className={`flex flex-col items-center gap-1 rounded-xl py-2 transition-colors duration-150 ${
+                isSelected
+                  ? "bg-neutral-100 text-neutral-950"
+                  : isToday
+                    ? "bg-neutral-800 text-neutral-100"
+                    : "text-neutral-400"
+              }`}
+            >
+              <span className="text-xs">{WEEKDAY_SHORT[weekdayIndex(date)]}</span>
+              <span className="text-base font-semibold">{dayNum}</span>
+              <span className="flex h-1.5 gap-0.5">
+                {Array.from({ length: Math.min(count, 3) }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={`h-1 w-1 rounded-full ${
+                      isSelected ? "bg-neutral-950" : "bg-current"
+                    }`}
+                  />
+                ))}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mb-2 flex items-baseline justify-between px-1">
+        <h2 className="text-base font-semibold text-neutral-100">
+          {WEEKDAY_FULL[weekdayIndex(selectedDate)]}
+          {selectedDate === today && (
+            <span className="ml-2 rounded-full bg-neutral-800 px-2 py-0.5 text-xs font-medium text-neutral-300">
+              сьогодні
+            </span>
+          )}
+        </h2>
+        {dayTasks.length > 0 && (
+          <span className="text-xs text-neutral-500">
+            {activeCount} {pluralTasks(activeCount)} &middot; {formatHours(minutes)} год
+          </span>
+        )}
+      </div>
+
+      {dayTasks.length === 0 ? (
+        <p className="px-1 text-sm text-neutral-600">Немає задач на цей день</p>
       ) : (
-        <div className="flex flex-col gap-6">
-          {weekDates.map((date) => {
-            const dayTasks = sortDay(
-              visibleTasks.filter((t) => t.scheduledDate === date),
-            );
-            const activeCount = dayTasks.filter((t) => t.completedAt === null).length;
-            const minutes = dayTasks
-              .filter((t) => t.completedAt === null)
-              .reduce((sum, t) => sum + (t.estimatedMinutes ?? 30), 0);
-            const isToday = date === today;
-            const [, month, day] = date.split("-");
-
-            return (
-              <div key={date}>
-                <div
-                  className={`mb-2 flex items-baseline justify-between rounded-xl px-1 ${
-                    isToday ? "text-neutral-100" : "text-neutral-300"
-                  }`}
-                >
-                  <h2 className="text-base font-semibold">
-                    {WEEKDAY_FULL[weekdayIndex(date)]}
-                    <span className="ml-2 text-sm font-normal text-neutral-500">
-                      {day}.{month}
-                    </span>
-                    {isToday && (
-                      <span className="ml-2 rounded-full bg-neutral-800 px-2 py-0.5 text-xs font-medium text-neutral-300">
-                        сьогодні
-                      </span>
-                    )}
-                  </h2>
-                  {dayTasks.length > 0 && (
-                    <span className="text-xs text-neutral-500">
-                      {activeCount} {pluralTasks(activeCount)} &middot; {formatHours(minutes)} год
-                    </span>
-                  )}
-                </div>
-
-                {dayTasks.length === 0 ? (
-                  <p className="px-1 text-sm text-neutral-600">Немає задач</p>
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    {dayTasks.map((task) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onToggleDone={toggleDone}
-                        onDelete={remove}
-                        onUpdate={update}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        <div className="flex flex-col gap-3">
+          {dayTasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onToggleDone={toggleDone}
+              onDelete={remove}
+              onUpdate={update}
+            />
+          ))}
         </div>
       )}
 

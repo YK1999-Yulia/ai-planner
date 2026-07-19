@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { addTasks, loadTasks } from "@/lib/tasks-storage";
 import { PRIORITY_LABELS } from "@/lib/priority";
-import { dayOptions, formatShortDate } from "@/lib/date";
 import { hasSeenWelcome, markWelcomeSeen, hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
+import { DaySelect } from "@/components/DaySelect";
 import type { ParsedTaskDraft, Priority, Task } from "@/lib/types";
 
 const EXAMPLE_TEXT =
@@ -155,28 +155,11 @@ export default function CapturePage() {
                 <label className="mb-1 block text-xs text-neutral-500">
                   Запланована на
                 </label>
-                <select
-                  value={draft.scheduledDate ?? ""}
-                  onChange={(e) =>
-                    updateDraft(index, { scheduledDate: e.target.value || null })
-                  }
+                <DaySelect
+                  value={draft.scheduledDate}
+                  onChange={(value) => updateDraft(index, { scheduledDate: value })}
                   className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-neutral-200"
-                >
-                  {(dayOptions().some((o) => o.value === draft.scheduledDate)
-                    ? dayOptions()
-                    : [
-                        {
-                          value: draft.scheduledDate,
-                          label: formatShortDate(draft.scheduledDate as string),
-                        },
-                        ...dayOptions(),
-                      ]
-                  ).map((opt) => (
-                    <option key={opt.value ?? "none"} value={opt.value ?? ""}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div className="flex flex-wrap gap-2 text-sm">

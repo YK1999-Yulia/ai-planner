@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/priority";
 import { formatDeadline } from "@/lib/format";
-import { dayOptions, formatShortDate } from "@/lib/date";
+import { DaySelect } from "@/components/DaySelect";
 import type { Priority, Task } from "@/lib/types";
 
 interface TaskCardProps {
@@ -24,14 +24,6 @@ export function TaskCard({
   const [expanded, setExpanded] = useState(false);
   const isDone = task.completedAt !== null;
   const deadlineInfo = task.deadline ? formatDeadline(task.deadline) : null;
-
-  const options = dayOptions();
-  const dayOpts = options.some((o) => o.value === task.scheduledDate)
-    ? options
-    : [
-        { value: task.scheduledDate, label: formatShortDate(task.scheduledDate as string) },
-        ...options,
-      ];
 
   return (
     <div
@@ -94,17 +86,11 @@ export function TaskCard({
       {expanded && (
         <div className="mt-3 border-t border-neutral-800 pt-3">
           <label className="mb-1 block text-xs text-neutral-500">Запланована на</label>
-          <select
-            value={task.scheduledDate ?? ""}
-            onChange={(e) => onUpdate(task.id, { scheduledDate: e.target.value || null })}
+          <DaySelect
+            value={task.scheduledDate}
+            onChange={(value) => onUpdate(task.id, { scheduledDate: value })}
             className="mb-3 w-full rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-neutral-200"
-          >
-            {dayOpts.map((opt) => (
-              <option key={opt.value ?? "none"} value={opt.value ?? ""}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          />
 
           <div className="flex flex-wrap gap-2 text-sm">
             <select
