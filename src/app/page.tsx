@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { addTasks } from "@/lib/tasks-storage";
 import { PRIORITY_LABELS } from "@/lib/priority";
+import { hasSeenWelcome, markWelcomeSeen, hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
+import { WelcomeScreen } from "@/components/WelcomeScreen";
 import type { ParsedTaskDraft, Priority, Task } from "@/lib/types";
 
 const EXAMPLE_TEXT =
@@ -15,6 +17,12 @@ export default function CapturePage() {
   const [drafts, setDrafts] = useState<ParsedTaskDraft[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [welcomeSeen, setWelcomeSeen] = useState<boolean | null>(null);
+  const [showPreviewTip, setShowPreviewTip] = useState(false);
+
+  useEffect(() => {
+    setWelcomeSeen(hasSeenWelcome());
+  }, []);
 
   async function parse(inputText: string) {
     setLoading(true);
@@ -37,6 +45,7 @@ export default function CapturePage() {
         return;
       }
       setDrafts(data.tasks);
+      setShowPreviewTip(!hasSeenTip("preview"));
     } catch {
       setError("Не вдалося зв'язатися з сервером");
     } finally {
@@ -81,9 +90,25 @@ export default function CapturePage() {
       completedAt: null,
     }));
     addTasks(tasks);
+    markTipSeen("preview");
     setText("");
     setDrafts(null);
     router.push("/inbox");
+  }
+
+  if (welcomeSeen === null) {
+    return null;
+  }
+
+  if (!welcomeSeen) {
+    return (
+      <WelcomeScreen
+        onStart={() => {
+          markWelcomeSeen();
+          setWelcomeSeen(true);
+        }}
+      />
+    );
   }
 
   if (drafts) {
@@ -95,6 +120,13 @@ export default function CapturePage() {
         <p className="mb-4 text-sm text-neutral-400">
           Виправ, що потрібно, або видали зайве, а потім збережи.
         </p>
+
+        {showPreviewTip && (
+          <p className="mb-4 rounded-xl bg-neutral-900 px-4 py-3 text-sm text-neutral-400">
+            Це ще не збережено — можна виправити назву, пріоритет, час чи
+            дедлайн прямо в картці.
+          </p>
+        )}
 
         <div className="flex flex-col gap-3">
           {drafts.map((draft, index) => (
