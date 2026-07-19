@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { loadTasks, updateTask, deleteTask } from "@/lib/tasks-storage";
+import { loadTasks, updateTask } from "@/lib/tasks-storage";
+import {
+  subscribeDelete,
+  getPendingDelete,
+  getPendingDeleteServerSnapshot,
+  scheduleDelete,
+  undoPendingDelete,
+} from "@/lib/delete-store";
 import { TaskCard } from "@/components/TaskCard";
 import type { Priority, Task } from "@/lib/types";
 
@@ -12,8 +19,6 @@ const PRIORITY_RANK: Record<Priority, number> = {
   low: 2,
   none: 3,
 };
-
-const DELETE_DELAY_MS = 3500;
 
 function sortActive(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => {
@@ -36,14 +41,15 @@ function loadInboxTasks(): Task[] {
 export default function InboxPage() {
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [doneExpanded, setDoneExpanded] = useState(false);
-  const [pendingDelete, setPendingDelete] = useState<Task | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDelete = useSyncExternalStore(
+    subscribeDelete,
+    getPendingDelete,
+    getPendingDeleteServerSnapshot,
+  );
 
   useEffect(() => {
     setTasks(loadInboxTasks());
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
+    return subscribeDelete(() => setTasks(loadInboxTasks()));
   }, []);
 
   function toggleDone(task: Task) {
@@ -58,21 +64,11 @@ export default function InboxPage() {
   }
 
   function remove(task: Task) {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      if (pendingDelete) deleteTask(pendingDelete.id);
-    }
-    setPendingDelete(task);
-    timeoutRef.current = setTimeout(() => {
-      deleteTask(task.id);
-      setTasks(loadInboxTasks());
-      setPendingDelete(null);
-    }, DELETE_DELAY_MS);
+    scheduleDelete(task);
   }
 
   function undoDelete() {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setPendingDelete(null);
+    undoPendingDelete();
   }
 
   if (tasks === null) {

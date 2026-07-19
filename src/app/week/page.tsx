@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { loadTasks, updateTask, deleteTask } from "@/lib/tasks-storage";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { loadTasks, updateTask } from "@/lib/tasks-storage";
+import {
+  subscribeDelete,
+  getPendingDelete,
+  getPendingDeleteServerSnapshot,
+  scheduleDelete,
+  undoPendingDelete,
+} from "@/lib/delete-store";
 import { TaskCard } from "@/components/TaskCard";
 import { DaySelect } from "@/components/DaySelect";
 import {
@@ -48,8 +55,6 @@ interface PreviewRow {
   scheduledDate: string;
 }
 
-const DELETE_DELAY_MS = 3500;
-
 export default function WeekPage() {
   const [allTasks, setAllTasks] = useState<Task[] | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -57,14 +62,15 @@ export default function WeekPage() {
   const [distributing, setDistributing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewRow[] | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<Task | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDelete = useSyncExternalStore(
+    subscribeDelete,
+    getPendingDelete,
+    getPendingDeleteServerSnapshot,
+  );
 
   useEffect(() => {
     setAllTasks(loadTasks());
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
+    return subscribeDelete(() => setAllTasks(loadTasks()));
   }, []);
 
   useEffect(() => {
@@ -89,21 +95,11 @@ export default function WeekPage() {
   }
 
   function remove(task: Task) {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      if (pendingDelete) deleteTask(pendingDelete.id);
-    }
-    setPendingDelete(task);
-    timeoutRef.current = setTimeout(() => {
-      deleteTask(task.id);
-      refresh();
-      setPendingDelete(null);
-    }, DELETE_DELAY_MS);
+    scheduleDelete(task);
   }
 
   function undoDelete() {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setPendingDelete(null);
+    undoPendingDelete();
   }
 
   async function distributeWeek() {

@@ -1,16 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { loadTasks, updateTask, deleteTask } from "@/lib/tasks-storage";
+import { loadTasks, updateTask } from "@/lib/tasks-storage";
 import { loadSettings, saveSettings, type DaySettings } from "@/lib/settings-storage";
 import { hasGeneratedPlan, markPlanGenerated } from "@/lib/today-plan-storage";
+import {
+  subscribeDelete,
+  getPendingDelete,
+  getPendingDeleteServerSnapshot,
+  scheduleDelete,
+  undoPendingDelete,
+} from "@/lib/delete-store";
 import { TaskCard } from "@/components/TaskCard";
 import { todayString } from "@/lib/date";
 import { formatOverdueLabel } from "@/lib/format";
 import type { Task } from "@/lib/types";
-
-const DELETE_DELAY_MS = 3500;
 
 function addMinutes(time: string, minutes: number): string {
   const [h, m] = time.split(":").map(Number);
@@ -28,15 +33,16 @@ export default function TodayPage() {
   const [settings, setSettings] = useState<DaySettings | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<Task | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDelete = useSyncExternalStore(
+    subscribeDelete,
+    getPendingDelete,
+    getPendingDeleteServerSnapshot,
+  );
 
   useEffect(() => {
     setAllTasks(loadTasks());
     setSettings(loadSettings());
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
+    return subscribeDelete(() => setAllTasks(loadTasks()));
   }, []);
 
   function refresh() {
@@ -63,21 +69,11 @@ export default function TodayPage() {
   }
 
   function remove(task: Task) {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      if (pendingDelete) deleteTask(pendingDelete.id);
-    }
-    setPendingDelete(task);
-    timeoutRef.current = setTimeout(() => {
-      deleteTask(task.id);
-      refresh();
-      setPendingDelete(null);
-    }, DELETE_DELAY_MS);
+    scheduleDelete(task);
   }
 
   function undoDelete() {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setPendingDelete(null);
+    undoPendingDelete();
   }
 
   async function generatePlan() {
