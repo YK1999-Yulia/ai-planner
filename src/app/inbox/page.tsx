@@ -16,6 +16,7 @@ import {
   undoPendingDelete,
 } from "@/lib/delete-store";
 import { TaskCard } from "@/components/TaskCard";
+import { isArchived } from "@/lib/archive";
 import type { Priority, Task } from "@/lib/types";
 
 const PRIORITY_RANK: Record<Priority, number> = {
@@ -52,7 +53,7 @@ export default function InboxPage() {
     getPendingDeleteServerSnapshot,
   );
 
-  const tasks = allTasks.filter((t) => t.scheduledDate === null);
+  const tasks = allTasks.filter((t) => t.scheduledDate === null && !isArchived(t));
 
   function toggleDone(task: Task) {
     const done = task.completedAt !== null;
@@ -83,9 +84,12 @@ export default function InboxPage() {
         </p>
         <Link
           href="/"
-          className="rounded-full bg-accent px-6 py-3 text-base font-semibold text-accent-foreground"
+          className="mb-3 rounded-full bg-accent px-6 py-3 text-base font-semibold text-accent-foreground"
         >
           Занотувати
+        </Link>
+        <Link href="/archive" className="text-sm text-neutral-500 underline">
+          Архів
         </Link>
       </main>
     );
@@ -97,9 +101,14 @@ export default function InboxPage() {
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
-      <h1 className="mb-4 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
-        Вхідні
-      </h1>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
+          Вхідні
+        </h1>
+        <Link href="/archive" className="text-sm text-neutral-500 underline">
+          Архів
+        </Link>
+      </div>
 
       <div className="flex flex-col gap-4">
         {active.map((task) => (

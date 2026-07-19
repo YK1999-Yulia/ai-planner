@@ -20,6 +20,7 @@ import {
 import { TaskCard } from "@/components/TaskCard";
 import { todayString, addDays } from "@/lib/date";
 import { formatDaysUntil } from "@/lib/format";
+import { isArchived } from "@/lib/archive";
 import type { Task } from "@/lib/types";
 
 const HORIZON_DAYS = 7;
@@ -77,7 +78,7 @@ export default function TodayPage() {
 
   async function generatePlan() {
     const today = todayString();
-    const todayAll = allTasks.filter((t) => t.scheduledDate === today);
+    const todayAll = allTasks.filter((t) => t.scheduledDate === today && !isArchived(t));
     const overdueUndone = allTasks.filter(
       (t) => t.scheduledDate !== null && t.scheduledDate < today && t.completedAt === null,
     );
@@ -134,7 +135,7 @@ export default function TodayPage() {
   const visibleTasks = allTasks.filter((t) => t.id !== pendingDelete?.id);
 
   const todayTasks = visibleTasks
-    .filter((t) => t.scheduledDate === today)
+    .filter((t) => t.scheduledDate === today && !isArchived(t))
     .sort((a, b) => a.position - b.position);
 
   const overdueTasks = visibleTasks

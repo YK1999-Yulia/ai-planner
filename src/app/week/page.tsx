@@ -23,6 +23,7 @@ import {
   WEEKDAY_SHORT,
   weekdayIndex,
 } from "@/lib/date";
+import { isArchived } from "@/lib/archive";
 import type { Priority, Task } from "@/lib/types";
 
 const PRIORITY_RANK: Record<Priority, number> = {
@@ -226,11 +227,15 @@ export default function WeekPage() {
   }
 
   const todayTasks = sortByPriority(
-    visibleTasks.filter((t) => t.scheduledDate === today && t.completedAt === null),
+    visibleTasks.filter((t) => t.scheduledDate === today && !isArchived(t)),
   );
 
   let weekListTasks = visibleTasks.filter(
-    (t) => t.scheduledDate !== null && t.scheduledDate !== today && dates.includes(t.scheduledDate) && t.completedAt === null,
+    (t) =>
+      t.scheduledDate !== null &&
+      t.scheduledDate !== today &&
+      dates.includes(t.scheduledDate) &&
+      !isArchived(t),
   );
   if (selectedDate) {
     weekListTasks = weekListTasks.filter((t) => t.scheduledDate === selectedDate);
