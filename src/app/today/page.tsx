@@ -7,6 +7,7 @@ import { loadSettings, saveSettings, type DaySettings } from "@/lib/settings-sto
 import { hasGeneratedPlan, markPlanGenerated } from "@/lib/today-plan-storage";
 import { TaskCard } from "@/components/TaskCard";
 import { todayString } from "@/lib/date";
+import { formatOverdueLabel } from "@/lib/format";
 import type { Task } from "@/lib/types";
 
 const DELETE_DELAY_MS = 3500;
@@ -82,7 +83,12 @@ export default function TodayPage() {
   async function generatePlan() {
     if (!settings || !allTasks) return;
     const today = todayString();
-    const candidates = allTasks.filter((t) => t.scheduledDate === today);
+    const todayAll = allTasks.filter((t) => t.scheduledDate === today);
+    const overdueUndone = allTasks.filter(
+      (t) => t.scheduledDate !== null && t.scheduledDate < today && t.completedAt === null,
+    );
+    const candidates = [...overdueUndone, ...todayAll];
+    const overdueIds = new Set(overdueUndone.map((t) => t.id));
 
     if (candidates.length === 0) {
       setError("На сьогодні ще немає запланованих задач.");
@@ -102,6 +108,7 @@ export default function TodayPage() {
             priority: t.priority,
             estimatedMinutes: t.estimatedMinutes,
             deadline: t.deadline,
+            overdue: overdueIds.has(t.id),
           })),
           dayStart: settings.dayStart,
           dayEnd: settings.dayEnd,
@@ -114,7 +121,10 @@ export default function TodayPage() {
       }
 
       (data.orderedTaskIds as string[]).forEach((id, index) => {
-        updateTask(id, { position: index });
+        updateTask(id, {
+          position: index,
+          ...(overdueIds.has(id) ? { scheduledDate: today } : {}),
+        });
       });
 
       markPlanGenerated(today);
@@ -135,6 +145,9 @@ export default function TodayPage() {
   const todayTasks = visibleTasks
     .filter((t) => t.scheduledDate === today)
     .sort((a, b) => a.position - b.position);
+  const overdueTasks = visibleTasks
+    .filter((t) => t.scheduledDate !== null && t.scheduledDate < today && t.completedAt === null)
+    .sort((a, b) => (a.scheduledDate as string).localeCompare(b.scheduledDate as string));
 
   let cursor = settings.dayStart;
   const withTimes = todayTasks.map((t) => {
@@ -159,6 +172,27 @@ export default function TodayPage() {
     </h1>
   );
 
+  const overdueSection = overdueTasks.length > 0 && (
+    <div className="mb-6">
+      <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-red-400">
+        Прострочене
+      </h2>
+      <div className="flex flex-col gap-4">
+        {overdueTasks.map((task) => (
+          <TaskCard
+            key={task.id}
+            task={task}
+            overdueLabel={formatOverdueLabel(task.scheduledDate as string)}
+            onToggleDone={toggleDone}
+            onDelete={remove}
+            onUpdate={update}
+            onScheduleToday={() => update(task.id, { scheduledDate: today })}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
   const deleteToast = pendingDelete && (
     <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-lg">
       <span className="truncate text-sm text-neutral-300">
@@ -174,6 +208,7 @@ export default function TodayPage() {
     return (
       <main className="min-h-dvh px-4 pb-8 pt-6">
         {heading}
+        {overdueSection}
         <div className="flex flex-col items-center py-10 text-center">
           <p className="mb-6 text-lg text-neutral-300">На сьогодні задач поки немає</p>
           <Link
@@ -200,6 +235,7 @@ export default function TodayPage() {
     return (
       <main className="min-h-dvh px-4 pb-8 pt-6">
         {heading}
+        {overdueSection}
 
         <div className="mb-4">
           <p className="mb-2 text-sm text-neutral-300">
@@ -232,6 +268,7 @@ export default function TodayPage() {
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
       {heading}
+      {overdueSection}
 
       <div className="mb-4">
         <p className="mb-2 text-sm text-neutral-300">

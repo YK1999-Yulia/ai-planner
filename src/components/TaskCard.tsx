@@ -9,17 +9,21 @@ import type { Priority, Task } from "@/lib/types";
 interface TaskCardProps {
   task: Task;
   startTime?: string;
+  overdueLabel?: string;
   onToggleDone: (task: Task) => void;
   onDelete: (task: Task) => void;
   onUpdate: (id: string, patch: Partial<Task>) => void;
+  onScheduleToday?: () => void;
 }
 
 export function TaskCard({
   task,
   startTime,
+  overdueLabel,
   onToggleDone,
   onDelete,
   onUpdate,
+  onScheduleToday,
 }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
   const isDone = task.completedAt !== null;
@@ -77,6 +81,9 @@ export function TaskCard({
                 {deadlineInfo.label}
               </span>
             )}
+            {overdueLabel && (
+              <span className="font-medium text-red-400">{overdueLabel}</span>
+            )}
           </div>
         </button>
 
@@ -88,6 +95,15 @@ export function TaskCard({
           ✕
         </button>
       </div>
+
+      {onScheduleToday && !isDone && (
+        <button
+          onClick={onScheduleToday}
+          className="mt-3 rounded-full bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-200"
+        >
+          На сьогодні
+        </button>
+      )}
 
       {expanded && (
         <div className="mt-4 border-t border-white/10 pt-4">
