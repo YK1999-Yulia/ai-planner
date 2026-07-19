@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { loadTasks, updateTask, deleteTask } from "@/lib/tasks-storage";
 import { PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/priority";
+import { formatDeadline } from "@/lib/format";
 import type { Priority, Task } from "@/lib/types";
 
 const PRIORITY_RANK: Record<Priority, number> = {
@@ -96,6 +97,7 @@ export default function InboxPage() {
 
   function renderTask(task: Task) {
     const isDone = task.completedAt !== null;
+    const deadlineInfo = task.deadline ? formatDeadline(task.deadline) : null;
     return (
       <div
         key={task.id}
@@ -126,7 +128,11 @@ export default function InboxPage() {
               {PRIORITY_LABELS[task.priority]}
             </span>
             {task.estimatedMinutes && <span>{task.estimatedMinutes} хв</span>}
-            {task.deadline && <span>до {task.deadline}</span>}
+            {deadlineInfo && (
+              <span className={deadlineInfo.overdue ? "font-medium text-red-400" : undefined}>
+                {deadlineInfo.label}
+              </span>
+            )}
           </div>
         </div>
 

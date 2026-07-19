@@ -5,6 +5,7 @@ import Link from "next/link";
 import { loadTasks, updateTask } from "@/lib/tasks-storage";
 import { loadSettings, saveSettings, type DaySettings } from "@/lib/settings-storage";
 import { PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/priority";
+import { formatDeadline } from "@/lib/format";
 import type { Task } from "@/lib/types";
 
 function todayString(): string {
@@ -205,6 +206,7 @@ export default function TodayPage() {
         <div className="flex flex-col gap-3">
           {withTimes.map(({ task, start }) => {
             const done = task.completedAt !== null;
+            const deadlineInfo = task.deadline ? formatDeadline(task.deadline) : null;
             return (
               <div
                 key={task.id}
@@ -242,6 +244,15 @@ export default function TodayPage() {
                       {PRIORITY_LABELS[task.priority]}
                     </span>
                     {task.estimatedMinutes && <span>{task.estimatedMinutes} хв</span>}
+                    {deadlineInfo && (
+                      <span
+                        className={
+                          deadlineInfo.overdue ? "font-medium text-red-400" : undefined
+                        }
+                      >
+                        {deadlineInfo.label}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
