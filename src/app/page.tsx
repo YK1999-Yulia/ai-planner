@@ -8,12 +8,17 @@ import { PRIORITY_LABELS } from "@/lib/priority";
 import { hasSeenWelcome, markWelcomeSeen, hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import { getUserName } from "@/lib/profile-storage";
 import { getGreeting } from "@/lib/format";
+import { vibrate } from "@/lib/haptics";
+import { TAP_ACTIVE } from "@/lib/ui";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { DaySelect } from "@/components/DaySelect";
+import { TipBanner } from "@/components/TipBanner";
 import type { ParsedTaskDraft, Priority, Task } from "@/lib/types";
 
 const EXAMPLE_TEXT =
   "Купити молоко і хліб, подзвонити мамі до вечора, доробити презентацію для клієнта до п'ятниці, записатись до лікаря";
+
+const STAGGER_MS = 35;
 
 export default function CapturePage() {
   const router = useRouter();
@@ -55,6 +60,7 @@ export default function CapturePage() {
       }
       setDrafts(data.tasks);
       setShowPreviewTip(!hasSeenTip("preview"));
+      vibrate(20);
     } catch {
       setError("Не вдалося зв'язатися з сервером");
     } finally {
@@ -64,11 +70,13 @@ export default function CapturePage() {
 
   function handleSubmit() {
     if (!text.trim() || loading) return;
+    vibrate(10);
     setIsExampleFlow(false);
     parse(text);
   }
 
   function handleTryExample() {
+    vibrate(10);
     setText(EXAMPLE_TEXT);
     setIsExampleFlow(true);
     parse(EXAMPLE_TEXT);
@@ -86,6 +94,7 @@ export default function CapturePage() {
 
   function confirmDrafts() {
     if (!drafts || drafts.length === 0) return;
+    vibrate(10);
     const now = new Date().toISOString();
     const tasks: Task[] = drafts.map((d) => ({
       id: crypto.randomUUID(),
@@ -126,7 +135,7 @@ export default function CapturePage() {
 
   if (drafts) {
     return (
-      <main className="min-h-dvh px-4 pb-8 pt-6">
+      <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
         <h1 className="mb-1 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
           Перевір задачі
         </h1>
@@ -135,17 +144,21 @@ export default function CapturePage() {
         </p>
 
         {showPreviewTip && (
-          <p className="mb-4 rounded-xl bg-card px-4 py-3 text-sm text-neutral-300">
-            Це ще не збережено — можна виправити назву, пріоритет, час чи
-            дедлайн прямо в картці.
-          </p>
+          <TipBanner
+            text="Це ще не збережено — можна виправити назву, пріоритет, час чи дедлайн прямо в картці."
+            onDismiss={() => {
+              markTipSeen("preview");
+              setShowPreviewTip(false);
+            }}
+          />
         )}
 
         <div className="flex flex-col gap-4">
           {drafts.map((draft, index) => (
             <div
               key={index}
-              className="rounded-2xl bg-card p-5 animate-[fadeInUp_0.2s_ease-out]"
+              style={{ animationDelay: `${Math.min(index, 12) * STAGGER_MS}ms` }}
+              className="rounded-2xl bg-card p-5 animate-[fadeInUp_0.2s_ease-out_backwards]"
             >
               <div className="mb-3 flex items-start justify-between gap-2">
                 <input
@@ -156,7 +169,7 @@ export default function CapturePage() {
                 <button
                   onClick={() => removeDraft(index)}
                   aria-label="Видалити задачу"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-neutral-500"
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-neutral-500 ${TAP_ACTIVE}`}
                 >
                   ✕
                 </button>
@@ -218,13 +231,13 @@ export default function CapturePage() {
           <button
             onClick={confirmDrafts}
             disabled={drafts.length === 0}
-            className="w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40"
+            className={`w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
           >
             Зберегти{drafts.length > 0 ? ` (${drafts.length})` : ""}
           </button>
           <button
             onClick={() => setDrafts(null)}
-            className="w-full rounded-full bg-neutral-800 py-3 text-base text-neutral-300"
+            className={`w-full rounded-full bg-neutral-800 py-3 text-base text-neutral-300 ${TAP_ACTIVE}`}
           >
             Скасувати
           </button>
@@ -234,13 +247,13 @@ export default function CapturePage() {
   }
 
   return (
-    <main className="min-h-dvh px-4 pb-8 pt-6">
+    <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
       <div className="mb-1 flex items-center justify-between">
         <p className="text-lg font-medium text-neutral-300">{getGreeting(userName)}</p>
         <Link
           href="/settings"
           aria-label="Налаштування"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-neutral-400"
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-neutral-400 ${TAP_ACTIVE}`}
         >
           ⚙
         </Link>
@@ -266,7 +279,7 @@ export default function CapturePage() {
         <button
           onClick={handleSubmit}
           disabled={!text.trim() || loading}
-          className="w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40"
+          className={`w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
         >
           {loading ? "Розбираю..." : "Розібрати"}
         </button>
@@ -274,7 +287,7 @@ export default function CapturePage() {
           <button
             onClick={handleTryExample}
             disabled={loading}
-            className="w-full rounded-full bg-neutral-800 py-3 text-base text-neutral-300"
+            className={`w-full rounded-full bg-neutral-800 py-3 text-base text-neutral-300 ${TAP_ACTIVE}`}
           >
             Спробувати з прикладом
           </button>

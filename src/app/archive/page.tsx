@@ -16,19 +16,25 @@ import {
   undoPendingDelete,
 } from "@/lib/delete-store";
 import { isArchived, completedDateString, formatArchiveGroupLabel } from "@/lib/archive";
+import { TAP_ACTIVE } from "@/lib/ui";
 import type { Task } from "@/lib/types";
 
 function ArchiveCard({
   task,
+  index,
   onRestore,
   onDelete,
 }: {
   task: Task;
+  index: number;
   onRestore: () => void;
   onDelete: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl bg-card p-4">
+    <div
+      style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
+      className="flex items-center justify-between gap-3 rounded-2xl bg-card p-4 animate-[fadeInUp_0.2s_ease-out_backwards]"
+    >
       <div className="flex-1">
         <p className="text-base text-neutral-500 line-through">{task.title}</p>
         <p className="mt-1 text-xs text-neutral-500">
@@ -38,14 +44,14 @@ function ArchiveCard({
       <div className="flex shrink-0 items-center gap-2">
         <button
           onClick={onRestore}
-          className="rounded-full bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-200"
+          className={`rounded-full bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-200 ${TAP_ACTIVE}`}
         >
           Повернути
         </button>
         <button
           onClick={onDelete}
           aria-label="Видалити назавжди"
-          className="flex h-9 w-9 items-center justify-center rounded-full text-lg text-neutral-500"
+          className={`flex h-9 w-9 items-center justify-center rounded-full text-lg text-neutral-500 ${TAP_ACTIVE}`}
         >
           ✕
         </button>
@@ -92,9 +98,13 @@ export default function ArchivePage() {
   }
 
   return (
-    <main className="min-h-dvh px-4 pb-8 pt-6">
+    <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
       <div className="mb-4 flex items-center gap-3">
-        <Link href="/inbox" aria-label="Назад до Вхідних" className="text-xl text-neutral-400">
+        <Link
+          href="/inbox"
+          aria-label="Назад до Вхідних"
+          className={`text-xl text-neutral-400 ${TAP_ACTIVE}`}
+        >
           ←
         </Link>
         <h1 className="font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
@@ -114,10 +124,11 @@ export default function ArchivePage() {
                 {formatArchiveGroupLabel(date)}
               </h2>
               <div className="flex flex-col gap-3">
-                {(groups.get(date) as Task[]).map((task) => (
+                {(groups.get(date) as Task[]).map((task, index) => (
                   <ArchiveCard
                     key={task.id}
                     task={task}
+                    index={index}
                     onRestore={() => restore(task)}
                     onDelete={() => remove(task)}
                   />
@@ -135,7 +146,7 @@ export default function ArchivePage() {
           </span>
           <button
             onClick={undoDelete}
-            className="ml-3 shrink-0 text-sm font-semibold text-accent"
+            className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_ACTIVE}`}
           >
             Повернути
           </button>

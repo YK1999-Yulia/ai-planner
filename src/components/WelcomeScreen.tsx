@@ -2,19 +2,22 @@
 
 import { useState } from "react";
 import { setUserName } from "@/lib/profile-storage";
+import { vibrate } from "@/lib/haptics";
+import { TAP_ACTIVE } from "@/lib/ui";
 
 export function WelcomeScreen({ onFinish }: { onFinish: () => void }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [name, setName] = useState("");
 
   function finish() {
+    vibrate(10);
     setUserName(name);
     onFinish();
   }
 
   if (step === 2) {
     return (
-      <main className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
+      <main className="flex min-h-dvh flex-col items-center justify-center px-6 text-center animate-[pageFade_0.15s_ease-out]">
         <h1 className="mb-3 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
           Як тебе звати?
         </h1>
@@ -28,7 +31,7 @@ export function WelcomeScreen({ onFinish }: { onFinish: () => void }) {
         />
         <button
           onClick={finish}
-          className="w-full max-w-xs rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground"
+          className={`w-full max-w-xs rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground ${TAP_ACTIVE}`}
         >
           {name.trim() ? "Далі" : "Пропустити"}
         </button>
@@ -46,8 +49,11 @@ export function WelcomeScreen({ onFinish }: { onFinish: () => void }) {
         твого дня.
       </p>
       <button
-        onClick={() => setStep(2)}
-        className="w-full max-w-xs rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground"
+        onClick={() => {
+          vibrate(10);
+          setStep(2);
+        }}
+        className={`w-full max-w-xs rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground ${TAP_ACTIVE}`}
       >
         Почати
       </button>

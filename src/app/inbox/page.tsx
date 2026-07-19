@@ -15,8 +15,11 @@ import {
   scheduleDelete,
   undoPendingDelete,
 } from "@/lib/delete-store";
+import { hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import { TaskCard } from "@/components/TaskCard";
+import { TipBanner } from "@/components/TipBanner";
 import { isArchived } from "@/lib/archive";
+import { TAP_ACTIVE } from "@/lib/ui";
 import type { Priority, Task } from "@/lib/types";
 
 const PRIORITY_RANK: Record<Priority, number> = {
@@ -47,6 +50,7 @@ export default function InboxPage() {
     getTasksServerSnapshot,
   );
   const [doneExpanded, setDoneExpanded] = useState(false);
+  const [showTip, setShowTip] = useState(() => !hasSeenTip("inbox"));
   const pendingDelete = useSyncExternalStore(
     subscribeDelete,
     getPendingDelete,
@@ -72,9 +76,14 @@ export default function InboxPage() {
     undoPendingDelete();
   }
 
+  function dismissTip() {
+    markTipSeen("inbox");
+    setShowTip(false);
+  }
+
   if (tasks.length === 0) {
     return (
-      <main className="flex min-h-dvh flex-col items-center justify-center px-6 pb-8 text-center">
+      <main className="flex min-h-dvh flex-col items-center justify-center px-6 pb-8 text-center animate-[pageFade_0.15s_ease-out]">
         <h1 className="mb-2 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
           Тут порожньо
         </h1>
@@ -84,11 +93,11 @@ export default function InboxPage() {
         </p>
         <Link
           href="/"
-          className="mb-3 rounded-full bg-accent px-6 py-3 text-base font-semibold text-accent-foreground"
+          className={`mb-3 rounded-full bg-accent px-6 py-3 text-base font-semibold text-accent-foreground ${TAP_ACTIVE}`}
         >
           Занотувати
         </Link>
-        <Link href="/archive" className="text-sm text-neutral-500 underline">
+        <Link href="/archive" className={`text-sm text-neutral-500 underline ${TAP_ACTIVE}`}>
           Архів
         </Link>
       </main>
@@ -100,21 +109,29 @@ export default function InboxPage() {
   const done = sortDone(visibleTasks.filter((t) => t.completedAt !== null));
 
   return (
-    <main className="min-h-dvh px-4 pb-8 pt-6">
+    <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
           Вхідні
         </h1>
-        <Link href="/archive" className="text-sm text-neutral-500 underline">
+        <Link href="/archive" className={`text-sm text-neutral-500 underline ${TAP_ACTIVE}`}>
           Архів
         </Link>
       </div>
 
+      {showTip && (
+        <TipBanner
+          text="Це твої Вхідні — всі задачі тут. Тапни задачу, щоб змінити день чи пріоритет. Готове відмічай галочкою 👌"
+          onDismiss={dismissTip}
+        />
+      )}
+
       <div className="flex flex-col gap-4">
-        {active.map((task) => (
+        {active.map((task, index) => (
           <TaskCard
             key={task.id}
             task={task}
+            index={index}
             onToggleDone={toggleDone}
             onDelete={remove}
             onUpdate={update}
@@ -126,17 +143,18 @@ export default function InboxPage() {
         <div className="mt-6">
           <button
             onClick={() => setDoneExpanded((v) => !v)}
-            className="flex w-full items-center justify-between rounded-xl px-1 py-2 text-sm font-medium text-neutral-400"
+            className={`flex w-full items-center justify-between rounded-xl px-1 py-2 text-sm font-medium text-neutral-400 ${TAP_ACTIVE}`}
           >
             <span>Виконано ({done.length})</span>
             <span className={doneExpanded ? "rotate-180" : ""}>⌄</span>
           </button>
           {doneExpanded && (
-            <div className="mt-2 flex flex-col gap-4">
-              {done.map((task) => (
+            <div className="mt-2 flex flex-col gap-4 animate-[fadeInUp_0.2s_ease-out_backwards]">
+              {done.map((task, index) => (
                 <TaskCard
                   key={task.id}
                   task={task}
+                  index={index}
                   onToggleDone={toggleDone}
                   onDelete={remove}
                   onUpdate={update}
@@ -154,7 +172,7 @@ export default function InboxPage() {
           </span>
           <button
             onClick={undoDelete}
-            className="ml-3 shrink-0 text-sm font-semibold text-accent"
+            className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_ACTIVE}`}
           >
             Повернути
           </button>

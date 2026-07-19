@@ -1,0 +1,16 @@
+import { TAP_ACTIVE } from "@/lib/ui";
+
+export function TipBanner({ text, onDismiss }: { text: string; onDismiss: () => void }) {
+  return (
+    <div className="mb-4 flex items-start justify-between gap-3 rounded-xl bg-card px-4 py-3 text-sm text-neutral-300 animate-[fadeInUp_0.2s_ease-out_backwards]">
+      <p className="flex-1">{text}</p>
+      <button
+        onClick={onDismiss}
+        aria-label="Закрити підказку"
+        className={`shrink-0 text-neutral-500 ${TAP_ACTIVE}`}
+      >
+        ✕
+      </button>
+    </div>
+  );
+}

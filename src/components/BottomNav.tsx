@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { TAP_ACTIVE } from "@/lib/ui";
 
 const TABS = [
   { href: "/", label: "Занотувати" },
@@ -22,7 +23,7 @@ export function BottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex-1 rounded-xl py-3 text-center text-sm transition-colors duration-150 ${
+              className={`flex-1 rounded-xl py-3 text-center text-sm ${TAP_ACTIVE} ${
                 active
                   ? "bg-accent font-semibold text-accent-foreground"
                   : "font-medium text-neutral-500"

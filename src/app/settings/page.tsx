@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getUserName, setUserName } from "@/lib/profile-storage";
 import { loadSettings, saveSettings, type DaySettings } from "@/lib/settings-storage";
 import { subscribeTasks, getTasksSnapshot, getTasksServerSnapshot, deleteTasksByIds } from "@/lib/tasks-store";
+import { TAP_ACTIVE } from "@/lib/ui";
 
 export default function SettingsPage() {
   const [name, setName] = useState(() => getUserName());
@@ -35,9 +36,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="min-h-dvh px-4 pb-8 pt-6">
+    <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
       <div className="mb-6 flex items-center gap-3">
-        <Link href="/" aria-label="Назад" className="text-xl text-neutral-400">
+        <Link href="/" aria-label="Назад" className={`text-xl text-neutral-400 ${TAP_ACTIVE}`}>
           ←
         </Link>
         <h1 className="font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
@@ -79,7 +80,7 @@ export default function SettingsPage() {
       {exampleIds.length > 0 && (
         <button
           onClick={removeExamples}
-          className="w-full rounded-full bg-neutral-800 py-3 text-base text-neutral-300"
+          className={`w-full rounded-full bg-neutral-800 py-3 text-base text-neutral-300 ${TAP_ACTIVE}`}
         >
           Прибрати приклади
         </button>

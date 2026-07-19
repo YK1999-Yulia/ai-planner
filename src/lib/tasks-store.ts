@@ -5,6 +5,7 @@ const STORAGE_KEY = "ai-planner:tasks";
 let tasks: Task[] = [];
 let initialized = false;
 const listeners = new Set<() => void>();
+const EMPTY_TASKS: Task[] = [];
 
 function readFromStorage(): Task[] {
   if (typeof window === "undefined") return [];
@@ -47,7 +48,7 @@ export function getTasksSnapshot(): Task[] {
 }
 
 export function getTasksServerSnapshot(): Task[] {
-  return [];
+  return EMPTY_TASKS;
 }
 
 export function addTasks(newTasks: Task[]) {

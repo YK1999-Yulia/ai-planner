@@ -3,11 +3,17 @@
 import { useState } from "react";
 import { PRIORITY_LABELS, PRIORITY_CHIP_STYLES, PRIORITY_STRIPE_COLORS } from "@/lib/priority";
 import { formatDaysUntil } from "@/lib/format";
+import { vibrate } from "@/lib/haptics";
+import { TAP_ACTIVE } from "@/lib/ui";
 import { DaySelect } from "@/components/DaySelect";
 import type { Priority, Task } from "@/lib/types";
 
+const STAGGER_MS = 35;
+const STAGGER_CAP = 12;
+
 interface TaskCardProps {
   task: Task;
+  index?: number;
   startTime?: string;
   dayLabel?: string;
   overdueLabel?: string;
@@ -20,6 +26,7 @@ interface TaskCardProps {
 
 export function TaskCard({
   task,
+  index = 0,
   startTime,
   dayLabel,
   overdueLabel,
@@ -34,20 +41,29 @@ export function TaskCard({
   const deadlineInfo = task.deadline ? formatDaysUntil(task.deadline) : null;
   const isOverdue = Boolean(overdueLabel) || deadlineInfo?.tone === "overdue";
   const stripeColor = isOverdue ? "border-l-red-500" : PRIORITY_STRIPE_COLORS[task.priority];
+  const entranceAnimation = isDone
+    ? "animate-[cardBounce_0.3s_ease-out]"
+    : "animate-[fadeInUp_0.2s_ease-out_backwards]";
+
+  function handleToggleDone() {
+    vibrate(10);
+    onToggleDone(task);
+  }
 
   return (
     <div
-      className={`rounded-2xl border-l-4 bg-card animate-[fadeInUp_0.2s_ease-out] ${stripeColor} ${
+      style={{ animationDelay: `${Math.min(index, STAGGER_CAP) * STAGGER_MS}ms` }}
+      className={`rounded-2xl border-l-4 bg-card ${entranceAnimation} ${stripeColor} ${
         compact ? "p-3" : "p-5"
       } ${isDone ? "opacity-50" : compact ? "opacity-70" : ""}`}
     >
       <div className="flex items-start gap-3">
         <button
-          onClick={() => onToggleDone(task)}
+          onClick={handleToggleDone}
           aria-label={isDone ? "Позначити невиконаною" : "Позначити виконаною"}
-          className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-150 ${
+          className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${TAP_ACTIVE} ${
             isDone
-              ? "border-accent bg-accent text-accent-foreground animate-[checkPop_0.25s_ease-out]"
+              ? "border-accent bg-accent text-accent-foreground animate-[checkPop_0.2s_ease-out]"
               : "border-neutral-600"
           }`}
         >
@@ -57,7 +73,7 @@ export function TaskCard({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="flex-1 text-left"
+          className={`flex-1 text-left ${TAP_ACTIVE}`}
         >
           <div className="flex items-baseline gap-2">
             {(startTime || dayLabel) && (
@@ -104,7 +120,7 @@ export function TaskCard({
         <button
           onClick={() => onDelete(task)}
           aria-label="Видалити задачу"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-neutral-500"
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-neutral-500 ${TAP_ACTIVE}`}
         >
           ✕
         </button>
@@ -113,14 +129,14 @@ export function TaskCard({
       {onScheduleToday && !isDone && (
         <button
           onClick={onScheduleToday}
-          className="mt-3 rounded-full bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-200"
+          className={`mt-3 rounded-full bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-200 ${TAP_ACTIVE}`}
         >
           На сьогодні
         </button>
       )}
 
       {expanded && (
-        <div className="mt-4 border-t border-white/10 pt-4">
+        <div className="mt-4 border-t border-white/10 pt-4 animate-[fadeInUp_0.2s_ease-out_backwards]">
           <label className="mb-1 block text-xs text-neutral-400">Запланована на</label>
           <DaySelect
             value={task.scheduledDate}

@@ -21,6 +21,8 @@ import { TaskCard } from "@/components/TaskCard";
 import { todayString, addDays } from "@/lib/date";
 import { formatDaysUntil, pluralTasks, formatHoursApprox } from "@/lib/format";
 import { isArchived } from "@/lib/archive";
+import { vibrate } from "@/lib/haptics";
+import { TAP_ACTIVE } from "@/lib/ui";
 import type { Task } from "@/lib/types";
 
 const HORIZON_DAYS = 7;
@@ -69,6 +71,7 @@ export default function TodayPage() {
   }
 
   async function generatePlan() {
+    vibrate(10);
     const today = todayString();
     const todayAll = allTasks.filter((t) => t.scheduledDate === today && !isArchived(t));
     const overdueUndone = allTasks.filter(
@@ -181,10 +184,11 @@ export default function TodayPage() {
         Прострочене
       </h2>
       <div className="flex flex-col gap-4">
-        {overdueTasks.map((task) => (
+        {overdueTasks.map((task, index) => (
           <TaskCard
             key={task.id}
             task={task}
+            index={index}
             overdueLabel={formatDaysUntil(task.scheduledDate as string).label}
             onToggleDone={toggleDone}
             onDelete={remove}
@@ -202,10 +206,11 @@ export default function TodayPage() {
         На горизонті
       </h2>
       <div className="flex flex-col gap-3">
-        {horizonTasks.map((task) => (
+        {horizonTasks.map((task, index) => (
           <TaskCard
             key={task.id}
             task={task}
+            index={index}
             compact
             onToggleDone={toggleDone}
             onDelete={remove}
@@ -225,14 +230,14 @@ export default function TodayPage() {
         <p className="mb-6 text-lg text-neutral-300">На сьогодні задач поки немає</p>
         <Link
           href="/"
-          className="mb-3 w-full max-w-xs rounded-full bg-accent py-4 text-base font-semibold text-accent-foreground"
+          className={`mb-3 w-full max-w-xs rounded-full bg-accent py-4 text-base font-semibold text-accent-foreground ${TAP_ACTIVE}`}
         >
           Записати першу задачу на сьогодні
         </Link>
         {inboxHasTasks && (
           <Link
             href="/inbox"
-            className="w-full max-w-xs rounded-full bg-neutral-800 py-3 text-base text-neutral-300"
+            className={`w-full max-w-xs rounded-full bg-neutral-800 py-3 text-base text-neutral-300 ${TAP_ACTIVE}`}
           >
             Взяти з Вхідних
           </Link>
@@ -260,7 +265,7 @@ export default function TodayPage() {
           </p>
           <Link
             href="/week"
-            className="rounded-full bg-neutral-800 px-6 py-3 text-base text-neutral-300"
+            className={`rounded-full bg-neutral-800 px-6 py-3 text-base text-neutral-300 ${TAP_ACTIVE}`}
           >
             Заглянути у Тиждень
           </Link>
@@ -284,7 +289,7 @@ export default function TodayPage() {
 
         <Link
           href="/settings"
-          className="mb-4 inline-block text-xs text-neutral-500 underline"
+          className={`mb-4 inline-block text-xs text-neutral-500 underline ${TAP_ACTIVE}`}
         >
           Робочі години: {settings.dayStart}–{settings.dayEnd}
         </Link>
@@ -298,7 +303,7 @@ export default function TodayPage() {
         <button
           onClick={generatePlan}
           disabled={generating}
-          className="mb-4 w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40"
+          className={`mb-4 w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
         >
           {generating ? "Складаю план..." : "Сформувати план на сьогодні"}
         </button>
@@ -312,10 +317,11 @@ export default function TodayPage() {
         )}
 
         <div className="flex flex-col gap-4">
-          {withTimes.map(({ task, start }) => (
+          {withTimes.map(({ task, start }, index) => (
             <TaskCard
               key={task.id}
               task={task}
+              index={index}
               startTime={start}
               onToggleDone={toggleDone}
               onDelete={remove}
@@ -328,7 +334,7 @@ export default function TodayPage() {
   }
 
   return (
-    <main className="min-h-dvh px-4 pb-8 pt-6">
+    <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
       <h1 className="font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
         Сьогодні
       </h1>
@@ -351,7 +357,7 @@ export default function TodayPage() {
           <span className="truncate text-sm text-neutral-300">
             Видалено &middot; {pendingDelete.title}
           </span>
-          <button onClick={undoDelete} className="ml-3 shrink-0 text-sm font-semibold text-accent">
+          <button onClick={undoDelete} className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_ACTIVE}`}>
             Повернути
           </button>
         </div>

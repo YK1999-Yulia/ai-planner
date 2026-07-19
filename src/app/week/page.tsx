@@ -14,8 +14,10 @@ import {
   scheduleDelete,
   undoPendingDelete,
 } from "@/lib/delete-store";
+import { hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import { TaskCard } from "@/components/TaskCard";
 import { DaySelect } from "@/components/DaySelect";
+import { TipBanner } from "@/components/TipBanner";
 import {
   weekDates,
   todayString,
@@ -24,6 +26,8 @@ import {
   weekdayIndex,
 } from "@/lib/date";
 import { isArchived } from "@/lib/archive";
+import { vibrate } from "@/lib/haptics";
+import { TAP_ACTIVE } from "@/lib/ui";
 import type { Priority, Task } from "@/lib/types";
 
 const PRIORITY_RANK: Record<Priority, number> = {
@@ -66,6 +70,7 @@ export default function WeekPage() {
   const [distributing, setDistributing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewRow[] | null>(null);
+  const [showTip, setShowTip] = useState(() => !hasSeenTip("week"));
   const pendingDelete = useSyncExternalStore(
     subscribeDelete,
     getPendingDelete,
@@ -93,7 +98,13 @@ export default function WeekPage() {
     setSelectedDate((prev) => (prev === date ? null : date));
   }
 
+  function dismissTip() {
+    markTipSeen("week");
+    setShowTip(false);
+  }
+
   async function distributeWeek() {
+    vibrate(10);
     const dates = weekDates(weekOffset);
     const candidates = allTasks.filter(
       (t) => t.scheduledDate === null && t.completedAt === null,
@@ -171,6 +182,7 @@ export default function WeekPage() {
 
   function confirmPreview() {
     if (!preview) return;
+    vibrate(10);
     for (const row of preview) {
       updateTaskById(row.id, { scheduledDate: row.scheduledDate });
     }
@@ -183,7 +195,7 @@ export default function WeekPage() {
 
   if (preview) {
     return (
-      <main className="min-h-dvh px-4 pb-8 pt-6">
+      <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
         <h1 className="mb-1 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
           Перевір розподіл
         </h1>
@@ -192,10 +204,11 @@ export default function WeekPage() {
         </p>
 
         <div className="flex flex-col gap-3">
-          {preview.map((row) => (
+          {preview.map((row, index) => (
             <div
               key={row.id}
-              className="flex items-center justify-between gap-3 rounded-2xl bg-card p-5 animate-[fadeInUp_0.2s_ease-out]"
+              style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
+              className="flex items-center justify-between gap-3 rounded-2xl bg-card p-5 animate-[fadeInUp_0.2s_ease-out_backwards]"
             >
               <span className="flex-1 text-base text-white">{row.title}</span>
               <DaySelect
@@ -211,13 +224,13 @@ export default function WeekPage() {
         <div className="mt-6 flex flex-col gap-2">
           <button
             onClick={confirmPreview}
-            className="w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground"
+            className={`w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground ${TAP_ACTIVE}`}
           >
             Застосувати
           </button>
           <button
             onClick={() => setPreview(null)}
-            className="w-full rounded-full bg-neutral-800 py-3 text-base text-neutral-300"
+            className={`w-full rounded-full bg-neutral-800 py-3 text-base text-neutral-300 ${TAP_ACTIVE}`}
           >
             Скасувати
           </button>
@@ -243,15 +256,22 @@ export default function WeekPage() {
   weekListTasks = sortByDay(weekListTasks);
 
   return (
-    <main className="min-h-dvh px-4 pb-8 pt-6">
+    <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
       <h1 className="mb-4 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
         Тиждень
       </h1>
 
+      {showTip && (
+        <TipBanner
+          text="Тут твій тиждень: тапни день, щоб побачити задачі, або натисни «Розподілити тиждень» — я сам розкладу все з Вхідних 👆"
+          onDismiss={dismissTip}
+        />
+      )}
+
       <button
         onClick={distributeWeek}
         disabled={distributing}
-        className="mb-4 w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40"
+        className={`mb-4 w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
       >
         {distributing ? "Розподіляю..." : "Розподілити тиждень AI"}
       </button>
@@ -263,7 +283,7 @@ export default function WeekPage() {
           onClick={() => setWeekOffset((o) => Math.max(0, o - 1))}
           disabled={weekOffset === 0}
           aria-label="Попередній тиждень"
-          className="flex h-9 w-9 items-center justify-center rounded-full text-lg text-neutral-400 disabled:opacity-30"
+          className={`flex h-9 w-9 items-center justify-center rounded-full text-lg text-neutral-400 disabled:opacity-30 ${TAP_ACTIVE}`}
         >
           ←
         </button>
@@ -273,7 +293,7 @@ export default function WeekPage() {
         <button
           onClick={() => setWeekOffset((o) => o + 1)}
           aria-label="Наступний тиждень"
-          className="flex h-9 w-9 items-center justify-center rounded-full text-lg text-neutral-400"
+          className={`flex h-9 w-9 items-center justify-center rounded-full text-lg text-neutral-400 ${TAP_ACTIVE}`}
         >
           →
         </button>
@@ -292,7 +312,7 @@ export default function WeekPage() {
             <button
               key={date}
               onClick={() => selectDay(date)}
-              className={`flex flex-col items-center gap-1 rounded-xl py-2 transition-colors duration-150 ${
+              className={`flex flex-col items-center gap-1 rounded-xl py-2 ${TAP_ACTIVE} ${
                 isSelected
                   ? "bg-accent text-accent-foreground"
                   : isToday
@@ -328,10 +348,11 @@ export default function WeekPage() {
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {todayTasks.map((task) => (
+            {todayTasks.map((task, index) => (
               <TaskCard
                 key={task.id}
                 task={task}
+                index={index}
                 onToggleDone={toggleDone}
                 onDelete={remove}
                 onUpdate={update}
@@ -347,10 +368,11 @@ export default function WeekPage() {
             Задачі цього тижня
           </h2>
           <div className="flex flex-col gap-3">
-            {weekListTasks.map((task) => (
+            {weekListTasks.map((task, index) => (
               <TaskCard
                 key={task.id}
                 task={task}
+                index={index}
                 compact
                 dayLabel={WEEKDAY_SHORT[weekdayIndex(task.scheduledDate as string)]}
                 onToggleDone={toggleDone}
@@ -369,7 +391,7 @@ export default function WeekPage() {
           </span>
           <button
             onClick={undoDelete}
-            className="ml-3 shrink-0 text-sm font-semibold text-accent"
+            className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_ACTIVE}`}
           >
             Повернути
           </button>
