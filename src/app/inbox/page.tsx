@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { loadTasks, updateTask, deleteTask } from "@/lib/tasks-storage";
 import { PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/priority";
@@ -12,6 +12,8 @@ const PRIORITY_RANK: Record<Priority, number> = {
   low: 2,
   none: 3,
 };
+
+const DELETE_DELAY_MS = 3500;
 
 function sortActive(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => {
@@ -30,9 +32,14 @@ function sortDone(tasks: Task[]): Task[] {
 export default function InboxPage() {
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [doneExpanded, setDoneExpanded] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Task | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setTasks(loadTasks().filter((t) => t.status === "inbox"));
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, []);
 
   function toggleDone(task: Task) {
@@ -42,8 +49,21 @@ export default function InboxPage() {
   }
 
   function remove(task: Task) {
-    deleteTask(task.id);
-    setTasks(loadTasks().filter((t) => t.status === "inbox"));
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      if (pendingDelete) deleteTask(pendingDelete.id);
+    }
+    setPendingDelete(task);
+    timeoutRef.current = setTimeout(() => {
+      deleteTask(task.id);
+      setTasks(loadTasks().filter((t) => t.status === "inbox"));
+      setPendingDelete(null);
+    }, DELETE_DELAY_MS);
+  }
+
+  function undoDelete() {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setPendingDelete(null);
   }
 
   if (tasks === null) {
@@ -70,8 +90,9 @@ export default function InboxPage() {
     );
   }
 
-  const active = sortActive(tasks.filter((t) => t.completedAt === null));
-  const done = sortDone(tasks.filter((t) => t.completedAt !== null));
+  const visibleTasks = tasks.filter((t) => t.id !== pendingDelete?.id);
+  const active = sortActive(visibleTasks.filter((t) => t.completedAt === null));
+  const done = sortDone(visibleTasks.filter((t) => t.completedAt !== null));
 
   function renderTask(task: Task) {
     const isDone = task.completedAt !== null;
@@ -138,6 +159,20 @@ export default function InboxPage() {
           {doneExpanded && (
             <div className="mt-2 flex flex-col gap-3">{done.map(renderTask)}</div>
           )}
+        </div>
+      )}
+
+      {pendingDelete && (
+        <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-neutral-800 px-4 py-3 shadow-lg">
+          <span className="truncate text-sm text-neutral-200">
+            Видалено &middot; {pendingDelete.title}
+          </span>
+          <button
+            onClick={undoDelete}
+            className="ml-3 shrink-0 text-sm font-semibold text-neutral-100"
+          >
+            Повернути
+          </button>
         </div>
       )}
     </main>
