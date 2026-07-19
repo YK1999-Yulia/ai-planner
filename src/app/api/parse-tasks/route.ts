@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
+import { todayString } from "@/lib/date";
 import type { ParsedTaskDraft } from "@/lib/types";
 
 const MAX_TEXT_LENGTH = 4000;
@@ -34,10 +35,22 @@ const recordTasksTool = {
             deadline: {
               type: "string",
               description:
-                "Дедлайн у форматі YYYY-MM-DD, якщо він є в тексті (перевести відносні дати як 'завтра'). Порожній рядок, якщо дедлайну немає.",
+                "Дедлайн у форматі YYYY-MM-DD — коли задача МАЄ БУТИ ГОТОВА (фрази на кшталт 'до п'ятниці', 'не пізніше вечора'). Порожній рядок, якщо дедлайну немає.",
+            },
+            scheduled_date: {
+              type: "string",
+              description:
+                "Дата у форматі YYYY-MM-DD — коли користувач планує ЦЕ РОБИТИ (фрази на кшталт 'в середу подзвонити', 'завтра купити'). Порожній рядок, якщо день виконання явно не вказано.",
             },
           },
-          required: ["title", "source_text", "priority", "estimated_minutes", "deadline"],
+          required: [
+            "title",
+            "source_text",
+            "priority",
+            "estimated_minutes",
+            "deadline",
+            "scheduled_date",
+          ],
         },
       },
     },
@@ -72,16 +85,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayString();
 
   const systemPrompt = `Ти асистент, який перетворює хаотичний текст користувача на список окремих задач.
 Сьогоднішня дата: ${today}.
+
+Важливо розрізняти два РІЗНІ поняття:
+- deadline — коли задача МАЄ БУТИ ГОТОВА ("до п'ятниці", "не пізніше вечора", "максимум до понеділка").
+- scheduled_date — коли користувач ПЛАНУЄ ЦЕ РОБИТИ ("в середу подзвонити", "завтра купити", "у четвер дзвінок").
+Це не одне й те саме: задача може мати дедлайн без конкретного дня виконання, день виконання без дедлайну, або й обидва одразу.
 
 Правила:
 - Розбий текст на окремі, конкретні задачі.
 - Для кожної задачі визнач priority: "high", "medium", "low", або "none", якщо пріоритет не зрозумілий з тексту.
 - Оціни, скільки хвилин орієнтовно займе задача (число більше нуля).
-- Якщо в тексті є дедлайн чи часова прив'язка ("до вечора", "завтра", "у п'ятницю") — переведи її в дату у форматі YYYY-MM-DD відносно сьогоднішньої дати. Якщо дедлайну немає — постав порожній рядок.
+- deadline: якщо в тексті явно сказано, до якого моменту задача має бути готова — переведи у дату YYYY-MM-DD відносно сьогоднішньої дати. Інакше — порожній рядок.
+- scheduled_date: якщо в тексті явно названо день, коли користувач збирається це зробити ("завтра", "у середу") — переведи у дату YYYY-MM-DD (якщо названий день тижня вже минув цього тижня, бери найближчий такий день наступного тижня). Інакше — порожній рядок.
 - title пиши тією ж мовою, якою написаний текст користувача.
 - Якщо в тексті взагалі немає задач — поверни порожній список tasks.`;
 
@@ -127,6 +146,10 @@ export async function POST(request: NextRequest) {
         deadline:
           typeof t.deadline === "string" && /^\d{4}-\d{2}-\d{2}$/.test(t.deadline)
             ? t.deadline
+            : null,
+        scheduledDate:
+          typeof t.scheduled_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(t.scheduled_date)
+            ? t.scheduled_date
             : null,
       };
     }).filter((t) => t.title.length > 0);

@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { loadTasks, updateTask, deleteTask } from "@/lib/tasks-storage";
-import { PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/priority";
-import { formatDeadline } from "@/lib/format";
+import { TaskCard } from "@/components/TaskCard";
 import type { Priority, Task } from "@/lib/types";
 
 const PRIORITY_RANK: Record<Priority, number> = {
@@ -30,6 +29,10 @@ function sortDone(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => (b.completedAt ?? "").localeCompare(a.completedAt ?? ""));
 }
 
+function loadInboxTasks(): Task[] {
+  return loadTasks().filter((t) => t.scheduledDate === null);
+}
+
 export default function InboxPage() {
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [doneExpanded, setDoneExpanded] = useState(false);
@@ -37,7 +40,7 @@ export default function InboxPage() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setTasks(loadTasks().filter((t) => t.status === "inbox"));
+    setTasks(loadInboxTasks());
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
@@ -46,7 +49,12 @@ export default function InboxPage() {
   function toggleDone(task: Task) {
     const done = task.completedAt !== null;
     updateTask(task.id, { completedAt: done ? null : new Date().toISOString() });
-    setTasks(loadTasks().filter((t) => t.status === "inbox"));
+    setTasks(loadInboxTasks());
+  }
+
+  function update(id: string, patch: Partial<Task>) {
+    updateTask(id, patch);
+    setTasks(loadInboxTasks());
   }
 
   function remove(task: Task) {
@@ -57,7 +65,7 @@ export default function InboxPage() {
     setPendingDelete(task);
     timeoutRef.current = setTimeout(() => {
       deleteTask(task.id);
-      setTasks(loadTasks().filter((t) => t.status === "inbox"));
+      setTasks(loadInboxTasks());
       setPendingDelete(null);
     }, DELETE_DELAY_MS);
   }
@@ -74,9 +82,7 @@ export default function InboxPage() {
   if (tasks.length === 0) {
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center px-6 pb-8 text-center">
-        <h1 className="mb-2 text-2xl font-bold text-neutral-100">
-          Тут порожньо
-        </h1>
+        <h1 className="mb-2 text-2xl font-bold text-neutral-100">Тут порожньо</h1>
         <p className="mb-6 text-neutral-400">
           Вивали думки на екрані &laquo;Занотувати&raquo; — і задачі
           з&apos;являться тут.
@@ -95,63 +101,21 @@ export default function InboxPage() {
   const active = sortActive(visibleTasks.filter((t) => t.completedAt === null));
   const done = sortDone(visibleTasks.filter((t) => t.completedAt !== null));
 
-  function renderTask(task: Task) {
-    const isDone = task.completedAt !== null;
-    const deadlineInfo = task.deadline ? formatDeadline(task.deadline) : null;
-    return (
-      <div
-        key={task.id}
-        className="flex items-start gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-4 animate-[fadeInUp_0.2s_ease-out]"
-      >
-        <button
-          onClick={() => toggleDone(task)}
-          aria-label={isDone ? "Позначити невиконаною" : "Позначити виконаною"}
-          className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-150 ${
-            isDone
-              ? "border-neutral-500 bg-neutral-500 text-neutral-950 animate-[checkPop_0.25s_ease-out]"
-              : "border-neutral-600"
-          }`}
-        >
-          {isDone && "✓"}
-        </button>
-
-        <div className="flex-1">
-          <p
-            className={`text-base ${
-              isDone ? "text-neutral-500 line-through" : "text-neutral-100"
-            }`}
-          >
-            {task.title}
-          </p>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-neutral-500">
-            <span className={PRIORITY_COLORS[task.priority]}>
-              {PRIORITY_LABELS[task.priority]}
-            </span>
-            {task.estimatedMinutes && <span>{task.estimatedMinutes} хв</span>}
-            {deadlineInfo && (
-              <span className={deadlineInfo.overdue ? "font-medium text-red-400" : undefined}>
-                {deadlineInfo.label}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <button
-          onClick={() => remove(task)}
-          aria-label="Видалити задачу"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-neutral-600"
-        >
-          ✕
-        </button>
-      </div>
-    );
-  }
-
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
       <h1 className="mb-4 text-2xl font-bold text-neutral-100">Вхідні</h1>
 
-      <div className="flex flex-col gap-4">{active.map(renderTask)}</div>
+      <div className="flex flex-col gap-4">
+        {active.map((task) => (
+          <TaskCard
+            key={task.id}
+            task={task}
+            onToggleDone={toggleDone}
+            onDelete={remove}
+            onUpdate={update}
+          />
+        ))}
+      </div>
 
       {done.length > 0 && (
         <div className="mt-6">
@@ -163,7 +127,17 @@ export default function InboxPage() {
             <span className={doneExpanded ? "rotate-180" : ""}>⌄</span>
           </button>
           {doneExpanded && (
-            <div className="mt-2 flex flex-col gap-4">{done.map(renderTask)}</div>
+            <div className="mt-2 flex flex-col gap-4">
+              {done.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onToggleDone={toggleDone}
+                  onDelete={remove}
+                  onUpdate={update}
+                />
+              ))}
+            </div>
           )}
         </div>
       )}

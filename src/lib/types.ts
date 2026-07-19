@@ -1,7 +1,5 @@
 export type Priority = "high" | "medium" | "low" | "none";
 
-export type TaskStatus = "inbox" | "today" | "done";
-
 export interface Task {
   id: string;
   title: string;
@@ -9,7 +7,6 @@ export interface Task {
   priority: Priority;
   estimatedMinutes: number | null;
   deadline: string | null;
-  status: TaskStatus;
   scheduledDate: string | null;
   position: number;
   createdAt: string;
@@ -22,4 +19,5 @@ export interface ParsedTaskDraft {
   priority: Priority;
   estimatedMinutes: number | null;
   deadline: string | null;
+  scheduledDate: string | null;
 }

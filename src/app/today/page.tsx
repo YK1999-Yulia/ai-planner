@@ -1,16 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { loadTasks, updateTask } from "@/lib/tasks-storage";
+import { loadTasks, updateTask, deleteTask } from "@/lib/tasks-storage";
 import { loadSettings, saveSettings, type DaySettings } from "@/lib/settings-storage";
-import { PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/priority";
-import { formatDeadline } from "@/lib/format";
+import { TaskCard } from "@/components/TaskCard";
+import { todayString } from "@/lib/date";
 import type { Task } from "@/lib/types";
 
-function todayString(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+const DELETE_DELAY_MS = 3500;
 
 function addMinutes(time: string, minutes: number): string {
   const [h, m] = time.split(":").map(Number);
@@ -28,10 +26,15 @@ export default function TodayPage() {
   const [settings, setSettings] = useState<DaySettings | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Task | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setAllTasks(loadTasks());
     setSettings(loadSettings());
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, []);
 
   function refresh() {
@@ -46,14 +49,42 @@ export default function TodayPage() {
     });
   }
 
-  async function generatePlan() {
-    if (!settings) return;
-    const inboxTasks = (allTasks ?? []).filter(
-      (t) => t.status === "inbox" && t.completedAt === null,
-    );
+  function toggleDone(task: Task) {
+    const done = task.completedAt !== null;
+    updateTask(task.id, { completedAt: done ? null : new Date().toISOString() });
+    refresh();
+  }
 
-    if (inboxTasks.length === 0) {
-      setError("У Вхідних немає задач, з яких можна скласти план.");
+  function update(id: string, patch: Partial<Task>) {
+    updateTask(id, patch);
+    refresh();
+  }
+
+  function remove(task: Task) {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      if (pendingDelete) deleteTask(pendingDelete.id);
+    }
+    setPendingDelete(task);
+    timeoutRef.current = setTimeout(() => {
+      deleteTask(task.id);
+      refresh();
+      setPendingDelete(null);
+    }, DELETE_DELAY_MS);
+  }
+
+  function undoDelete() {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setPendingDelete(null);
+  }
+
+  async function generatePlan() {
+    if (!settings || !allTasks) return;
+    const today = todayString();
+    const candidates = allTasks.filter((t) => t.scheduledDate === today);
+
+    if (candidates.length === 0) {
+      setError("На сьогодні ще немає запланованих задач.");
       return;
     }
 
@@ -64,7 +95,7 @@ export default function TodayPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tasks: inboxTasks.map((t) => ({
+          tasks: candidates.map((t) => ({
             id: t.id,
             title: t.title,
             priority: t.priority,
@@ -80,23 +111,9 @@ export default function TodayPage() {
         setError(data.error ?? "Не вдалося скласти план");
         return;
       }
-      if (data.orderedTaskIds.length === 0) {
-        setError("AI не зміг підібрати задачі під робочі години. Спробуй змінити години або додати менші задачі.");
-        return;
-      }
-
-      const today = todayString();
-      const existingToday = loadTasks().filter(
-        (t) => t.status === "today" && t.scheduledDate === today,
-      );
-      const startPosition = existingToday.length;
 
       (data.orderedTaskIds as string[]).forEach((id, index) => {
-        updateTask(id, {
-          status: "today",
-          scheduledDate: today,
-          position: startPosition + index,
-        });
+        updateTask(id, { position: index });
       });
 
       refresh();
@@ -107,19 +124,14 @@ export default function TodayPage() {
     }
   }
 
-  function toggleDone(task: Task) {
-    const done = task.completedAt !== null;
-    updateTask(task.id, { completedAt: done ? null : new Date().toISOString() });
-    refresh();
-  }
-
   if (allTasks === null || settings === null) {
     return null;
   }
 
   const today = todayString();
-  const todayTasks = allTasks
-    .filter((t) => t.status === "today" && t.scheduledDate === today)
+  const visibleTasks = allTasks.filter((t) => t.id !== pendingDelete?.id);
+  const todayTasks = visibleTasks
+    .filter((t) => t.scheduledDate === today)
     .sort((a, b) => a.position - b.position);
 
   let cursor = settings.dayStart;
@@ -192,8 +204,7 @@ export default function TodayPage() {
       {todayTasks.length === 0 ? (
         <div className="flex flex-col items-center py-10 text-center">
           <p className="mb-6 text-neutral-400">
-            Натисни кнопку вище — AI обере задачі з Вхідних і розставить їх у
-            плані на сьогодні.
+            Обери задачі у Вхідних або на Тижні — і вони з&apos;являться тут.
           </p>
           <Link
             href="/inbox"
@@ -204,60 +215,30 @@ export default function TodayPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {withTimes.map(({ task, start }) => {
-            const done = task.completedAt !== null;
-            const deadlineInfo = task.deadline ? formatDeadline(task.deadline) : null;
-            return (
-              <div
-                key={task.id}
-                className={`flex items-start gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-4 animate-[fadeInUp_0.2s_ease-out] ${
-                  done ? "opacity-50" : ""
-                }`}
-              >
-                <button
-                  onClick={() => toggleDone(task)}
-                  aria-label={done ? "Позначити невиконаною" : "Позначити виконаною"}
-                  className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-150 ${
-                    done
-                      ? "border-neutral-500 bg-neutral-500 text-neutral-950 animate-[checkPop_0.25s_ease-out]"
-                      : "border-neutral-600"
-                  }`}
-                >
-                  {done && "✓"}
-                </button>
+          {withTimes.map(({ task, start }) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              startTime={start}
+              onToggleDone={toggleDone}
+              onDelete={remove}
+              onUpdate={update}
+            />
+          ))}
+        </div>
+      )}
 
-                <div className="flex-1">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-sm font-medium text-neutral-400">
-                      {start}
-                    </span>
-                    <p
-                      className={`text-base ${
-                        done ? "text-neutral-500 line-through" : "text-neutral-100"
-                      }`}
-                    >
-                      {task.title}
-                    </p>
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-neutral-500">
-                    <span className={PRIORITY_COLORS[task.priority]}>
-                      {PRIORITY_LABELS[task.priority]}
-                    </span>
-                    {task.estimatedMinutes && <span>{task.estimatedMinutes} хв</span>}
-                    {deadlineInfo && (
-                      <span
-                        className={
-                          deadlineInfo.overdue ? "font-medium text-red-400" : undefined
-                        }
-                      >
-                        {deadlineInfo.label}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+      {pendingDelete && (
+        <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-neutral-800 px-4 py-3 shadow-lg">
+          <span className="truncate text-sm text-neutral-200">
+            Видалено &middot; {pendingDelete.title}
+          </span>
+          <button
+            onClick={undoDelete}
+            className="ml-3 shrink-0 text-sm font-semibold text-neutral-100"
+          >
+            Повернути
+          </button>
         </div>
       )}
     </main>

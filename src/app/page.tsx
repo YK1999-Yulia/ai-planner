@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { addTasks } from "@/lib/tasks-storage";
 import { PRIORITY_LABELS } from "@/lib/priority";
+import { dayOptions, formatShortDate } from "@/lib/date";
 import { hasSeenWelcome, markWelcomeSeen, hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import type { ParsedTaskDraft, Priority, Task } from "@/lib/types";
@@ -83,8 +84,7 @@ export default function CapturePage() {
       priority: d.priority,
       estimatedMinutes: d.estimatedMinutes,
       deadline: d.deadline,
-      status: "inbox",
-      scheduledDate: null,
+      scheduledDate: d.scheduledDate,
       position: 0,
       createdAt: now,
       completedAt: null,
@@ -147,6 +147,34 @@ export default function CapturePage() {
                 >
                   ✕
                 </button>
+              </div>
+
+              <div className="mb-2">
+                <label className="mb-1 block text-xs text-neutral-500">
+                  Запланована на
+                </label>
+                <select
+                  value={draft.scheduledDate ?? ""}
+                  onChange={(e) =>
+                    updateDraft(index, { scheduledDate: e.target.value || null })
+                  }
+                  className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-2 text-neutral-200"
+                >
+                  {(dayOptions().some((o) => o.value === draft.scheduledDate)
+                    ? dayOptions()
+                    : [
+                        {
+                          value: draft.scheduledDate,
+                          label: formatShortDate(draft.scheduledDate as string),
+                        },
+                        ...dayOptions(),
+                      ]
+                  ).map((opt) => (
+                    <option key={opt.value ?? "none"} value={opt.value ?? ""}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex flex-wrap gap-2 text-sm">

@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
+import { todayString } from "@/lib/date";
 
 interface CandidateTask {
   id: string;
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
   }
 
   const availableMinutes = Math.max(minutesBetween(dayStart, dayEnd), 0);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayString();
 
   const taskLines = tasks
     .map(
@@ -62,19 +63,17 @@ export async function POST(request: NextRequest) {
     )
     .join("\n");
 
-  const systemPrompt = `Ти асистент, який складає реалістичний план дня з наявних задач.
+  const systemPrompt = `Ти асистент, який упорядковує задачі, вже заплановані на сьогодні, у реалістичний план дня.
 Сьогоднішня дата: ${today}.
 Робочий день: з ${dayStart} до ${dayEnd} (це приблизно ${availableMinutes} хвилин).
 
-Список задач-кандидатів:
+Список задач, які треба впорядкувати (усі вже точно заплановані на сьогодні):
 ${taskLines}
 
 Правила:
-- Обери підмножину задач, сумарний орієнтовний час яких реалістично поміщається в доступні хвилини робочого дня. Не бери всі задачі, якщо вони туди не влазять.
-- Пріоритетнішими для включення є задачі з вищим пріоритетом (high) і задачі з ближчим дедлайном.
-- Впорядкуй обрані id так, як їх розумно виконувати протягом дня (наприклад, терміновіші й важливіші — раніше).
-- Використовуй лише id зі списку вище, нічого не вигадуй.
-- Якщо жодна задача не підходить (наприклад, немає жодної або доступного часу 0), поверни порожній список.`;
+- Впорядкуй ці задачі так, як їх розумно виконувати протягом дня (важливіші й терміновіші — раніше).
+- ОБОВ'ЯЗКОВО включи кожну задачу зі списку — нічого не пропускай і не вигадуй нових id.
+- Якщо сумарний час не поміщається в робочий день — все одно впорядкуй усі задачі, користувач сам побачить попередження про перевантаження.`;
 
   try {
     const anthropic = new Anthropic({ apiKey });
@@ -105,7 +104,11 @@ ${taskLines}
       Array.isArray(input.ordered_task_ids) ? input.ordered_task_ids : []
     ).filter((id): id is string => typeof id === "string" && validIds.has(id));
 
-    return NextResponse.json({ ok: true, orderedTaskIds });
+    // Safety net: if the model dropped any task, append the missing ones at the end
+    // so a task can never silently disappear from the day's plan.
+    const missing = tasks.map((t) => t.id).filter((id) => !orderedTaskIds.includes(id));
+
+    return NextResponse.json({ ok: true, orderedTaskIds: [...orderedTaskIds, ...missing] });
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Невідома помилка" },
