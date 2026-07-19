@@ -179,11 +179,11 @@ export default function CapturePage() {
 
                 <input
                   type="number"
-                  min={1}
+                  min={5}
                   value={draft.estimatedMinutes ?? ""}
                   onChange={(e) =>
                     updateDraft(index, {
-                      estimatedMinutes: e.target.value ? Number(e.target.value) : null,
+                      estimatedMinutes: e.target.value ? Math.max(5, Number(e.target.value)) : null,
                     })
                   }
                   placeholder="хв"

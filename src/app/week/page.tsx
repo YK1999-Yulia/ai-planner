@@ -122,7 +122,7 @@ export default function WeekPage() {
       return {
         date,
         taskCount: dayTasks.length,
-        minutes: dayTasks.reduce((sum, t) => sum + (t.estimatedMinutes ?? 30), 0),
+        minutes: dayTasks.reduce((sum, t) => sum + ((t.estimatedMinutes && t.estimatedMinutes > 0 ? t.estimatedMinutes : 30)), 0),
       };
     });
 
@@ -238,7 +238,7 @@ export default function WeekPage() {
   const activeCount = dayTasks.filter((t) => t.completedAt === null).length;
   const minutes = dayTasks
     .filter((t) => t.completedAt === null)
-    .reduce((sum, t) => sum + (t.estimatedMinutes ?? 30), 0);
+    .reduce((sum, t) => sum + ((t.estimatedMinutes && t.estimatedMinutes > 0 ? t.estimatedMinutes : 30)), 0);
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">

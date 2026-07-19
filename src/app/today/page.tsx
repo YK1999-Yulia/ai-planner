@@ -139,7 +139,7 @@ export default function TodayPage() {
   let cursor = settings.dayStart;
   const withTimes = todayTasks.map((t) => {
     const start = cursor;
-    cursor = addMinutes(cursor, t.estimatedMinutes ?? 30);
+    cursor = addMinutes(cursor, t.estimatedMinutes && t.estimatedMinutes > 0 ? t.estimatedMinutes : 30);
     return { task: t, start };
   });
 

@@ -71,7 +71,7 @@ export function TaskCard({
             >
               {PRIORITY_LABELS[task.priority]}
             </span>
-            {task.estimatedMinutes && (
+            {Boolean(task.estimatedMinutes) && (
               <span className="text-neutral-400">{task.estimatedMinutes} хв</span>
             )}
             {deadlineInfo && (
@@ -129,11 +129,11 @@ export function TaskCard({
 
             <input
               type="number"
-              min={1}
+              min={5}
               value={task.estimatedMinutes ?? ""}
               onChange={(e) =>
                 onUpdate(task.id, {
-                  estimatedMinutes: e.target.value ? Number(e.target.value) : null,
+                  estimatedMinutes: e.target.value ? Math.max(5, Number(e.target.value)) : null,
                 })
               }
               placeholder="хв"
