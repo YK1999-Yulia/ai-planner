@@ -70,3 +70,11 @@ export function deleteTaskById(id: string) {
   persist();
   emit();
 }
+
+export function deleteTasksByIds(ids: string[]) {
+  ensureInitialized();
+  const idSet = new Set(ids);
+  tasks = tasks.filter((t) => !idSet.has(t.id));
+  persist();
+  emit();
+}

@@ -11,6 +11,8 @@ export interface Task {
   position: number;
   createdAt: string;
   completedAt: string | null;
+  /** True for tasks created via Capture's "Спробувати з прикладом" button. */
+  isExample?: boolean;
 }
 
 export interface ParsedTaskDraft {

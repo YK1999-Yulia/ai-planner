@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { addTasks, getTasksSnapshot } from "@/lib/tasks-store";
 import { PRIORITY_LABELS } from "@/lib/priority";
 import { hasSeenWelcome, markWelcomeSeen, hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
+import { getUserName } from "@/lib/profile-storage";
+import { getGreeting } from "@/lib/format";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { DaySelect } from "@/components/DaySelect";
 import type { ParsedTaskDraft, Priority, Task } from "@/lib/types";
@@ -20,11 +23,14 @@ export default function CapturePage() {
   const [error, setError] = useState<string | null>(null);
   const [welcomeSeen, setWelcomeSeen] = useState<boolean | null>(null);
   const [showPreviewTip, setShowPreviewTip] = useState(false);
+  const [isExampleFlow, setIsExampleFlow] = useState(false);
+  const [userName, setUserNameState] = useState("");
 
   useEffect(() => {
     const forced = new URLSearchParams(window.location.search).get("welcome") === "1";
     const isNewUser = !hasSeenWelcome() && getTasksSnapshot().length === 0;
     setWelcomeSeen(!(forced || isNewUser));
+    setUserNameState(getUserName());
   }, []);
 
   async function parse(inputText: string) {
@@ -58,11 +64,13 @@ export default function CapturePage() {
 
   function handleSubmit() {
     if (!text.trim() || loading) return;
+    setIsExampleFlow(false);
     parse(text);
   }
 
   function handleTryExample() {
     setText(EXAMPLE_TEXT);
+    setIsExampleFlow(true);
     parse(EXAMPLE_TEXT);
   }
 
@@ -90,11 +98,13 @@ export default function CapturePage() {
       position: 0,
       createdAt: now,
       completedAt: null,
+      isExample: isExampleFlow,
     }));
     addTasks(tasks);
     markTipSeen("preview");
     setText("");
     setDrafts(null);
+    setIsExampleFlow(false);
     router.push("/inbox");
   }
 
@@ -105,8 +115,9 @@ export default function CapturePage() {
   if (!welcomeSeen) {
     return (
       <WelcomeScreen
-        onStart={() => {
+        onFinish={() => {
           markWelcomeSeen();
+          setUserNameState(getUserName());
           setWelcomeSeen(true);
         }}
       />
@@ -224,6 +235,16 @@ export default function CapturePage() {
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
+      <div className="mb-1 flex items-center justify-between">
+        <p className="text-lg font-medium text-neutral-300">{getGreeting(userName)}</p>
+        <Link
+          href="/settings"
+          aria-label="Налаштування"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-neutral-400"
+        >
+          ⚙
+        </Link>
+      </div>
       <h1 className="mb-1 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
         Що в голові?
       </h1>

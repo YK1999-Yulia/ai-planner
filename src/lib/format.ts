@@ -34,3 +34,28 @@ export function formatDaysUntil(dateStr: string, now: Date = new Date()): DaysUn
   if (daysAgo === 1) return { label: "вчора", tone: "overdue", overdue: true };
   return { label: `${daysAgo} ${pluralDays(daysAgo)} тому`, tone: "overdue", overdue: true };
 }
+
+export function pluralTasks(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return "задача";
+  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return "задачі";
+  return "задач";
+}
+
+export function formatHoursApprox(totalMinutes: number): string {
+  const hours = totalMinutes / 60;
+  const rounded = Number.isInteger(hours) ? `${hours}` : hours.toFixed(1);
+  return `~${rounded} год`;
+}
+
+/** Time-of-day greeting; omits the name gracefully if none is set. */
+export function getGreeting(name: string, now: Date = new Date()): string {
+  const hour = now.getHours();
+  const suffix = name ? `, ${name}` : "";
+
+  if (hour >= 5 && hour < 12) return `Доброго ранку${suffix} ☀️`;
+  if (hour >= 12 && hour < 18) return `Гарного дня${suffix}`;
+  if (hour >= 18 && hour < 23) return `Добрий вечір${suffix} 🌙`;
+  return `Пізня пташка${suffix}? 🦉`;
+}

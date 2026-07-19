@@ -8,7 +8,7 @@ import {
   getTasksServerSnapshot,
   updateTaskById,
 } from "@/lib/tasks-store";
-import { loadSettings, saveSettings, type DaySettings } from "@/lib/settings-storage";
+import { loadSettings, type DaySettings } from "@/lib/settings-storage";
 import { hasGeneratedPlan, markPlanGenerated } from "@/lib/today-plan-storage";
 import {
   subscribeDelete,
@@ -19,7 +19,7 @@ import {
 } from "@/lib/delete-store";
 import { TaskCard } from "@/components/TaskCard";
 import { todayString, addDays } from "@/lib/date";
-import { formatDaysUntil } from "@/lib/format";
+import { formatDaysUntil, pluralTasks, formatHoursApprox } from "@/lib/format";
 import { isArchived } from "@/lib/archive";
 import type { Task } from "@/lib/types";
 
@@ -42,7 +42,7 @@ export default function TodayPage() {
     getTasksSnapshot,
     getTasksServerSnapshot,
   );
-  const [settings, setSettings] = useState<DaySettings>(() => loadSettings());
+  const [settings] = useState<DaySettings>(() => loadSettings());
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pendingDelete = useSyncExternalStore(
@@ -50,14 +50,6 @@ export default function TodayPage() {
     getPendingDelete,
     getPendingDeleteServerSnapshot,
   );
-
-  function updateSetting(patch: Partial<DaySettings>) {
-    setSettings((prev) => {
-      const next = { ...prev, ...patch };
-      saveSettings(next);
-      return next;
-    });
-  }
 
   function toggleDone(task: Task) {
     const done = task.completedAt !== null;
@@ -172,6 +164,17 @@ export default function TodayPage() {
   );
   const showSectionLabels = overdueTasks.length > 0 || horizonTasks.length > 0;
 
+  const activeTodayCount = todayTasks.filter((t) => t.completedAt === null).length;
+  const activeTodayMinutes = todayTasks
+    .filter((t) => t.completedAt === null)
+    .reduce((sum, t) => sum + (t.estimatedMinutes && t.estimatedMinutes > 0 ? t.estimatedMinutes : 30), 0);
+  const todaySubtitle =
+    todayTasks.length === 0
+      ? null
+      : allDone
+        ? "Все зроблено. Ти молодець ✨"
+        : `${activeTodayCount} ${pluralTasks(activeTodayCount)} на сьогодні · ${formatHoursApprox(activeTodayMinutes)}`;
+
   const overdueSection = overdueTasks.length > 0 && (
     <div className="mb-6">
       <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-red-400">
@@ -279,26 +282,12 @@ export default function TodayPage() {
           </div>
         </div>
 
-        <div className="mb-4 flex items-center gap-4 rounded-2xl bg-card p-5">
-          <div className="flex-1">
-            <label className="mb-1 block text-xs text-neutral-400">Початок дня</label>
-            <input
-              type="time"
-              value={settings.dayStart}
-              onChange={(e) => updateSetting({ dayStart: e.target.value })}
-              className="w-full rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
-            />
-          </div>
-          <div className="flex-1">
-            <label className="mb-1 block text-xs text-neutral-400">Кінець дня</label>
-            <input
-              type="time"
-              value={settings.dayEnd}
-              onChange={(e) => updateSetting({ dayEnd: e.target.value })}
-              className="w-full rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
-            />
-          </div>
-        </div>
+        <Link
+          href="/settings"
+          className="mb-4 inline-block text-xs text-neutral-500 underline"
+        >
+          Робочі години: {settings.dayStart}–{settings.dayEnd}
+        </Link>
 
         {!planGenerated && (
           <p className="mb-3 rounded-xl bg-accent/15 px-4 py-3 text-sm font-medium text-accent">
@@ -340,9 +329,11 @@ export default function TodayPage() {
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6">
-      <h1 className="mb-4 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
+      <h1 className="font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
         Сьогодні
       </h1>
+      {todaySubtitle && <p className="mb-4 text-sm text-neutral-400">{todaySubtitle}</p>}
+      {!todaySubtitle && <div className="mb-4" />}
 
       {overdueSection}
 
