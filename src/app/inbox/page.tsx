@@ -78,7 +78,7 @@ export default function InboxPage() {
           Тут порожньо
         </h1>
         <p className="mb-6 text-neutral-400">
-          Вивали думки на екрані &laquo;Занотувати&raquo; — і задачі
+          Занотуй перші думки на вкладці &laquo;Занотувати&raquo; — і задачі
           з&apos;являться тут.
         </p>
         <Link

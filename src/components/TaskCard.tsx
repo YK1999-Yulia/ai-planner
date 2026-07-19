@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PRIORITY_LABELS, PRIORITY_CHIP_STYLES } from "@/lib/priority";
-import { formatDeadline } from "@/lib/format";
+import { formatDaysUntil } from "@/lib/format";
 import { DaySelect } from "@/components/DaySelect";
 import type { Priority, Task } from "@/lib/types";
 
@@ -31,7 +31,7 @@ export function TaskCard({
 }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
   const isDone = task.completedAt !== null;
-  const deadlineInfo = task.deadline ? formatDeadline(task.deadline) : null;
+  const deadlineInfo = task.deadline ? formatDaysUntil(task.deadline) : null;
 
   return (
     <div
@@ -82,7 +82,13 @@ export function TaskCard({
             )}
             {deadlineInfo && (
               <span
-                className={deadlineInfo.overdue ? "font-medium text-red-400" : "text-neutral-400"}
+                className={
+                  deadlineInfo.tone === "overdue"
+                    ? "font-medium text-red-400"
+                    : deadlineInfo.tone === "today"
+                      ? "font-medium text-accent"
+                      : "text-neutral-400"
+                }
               >
                 {deadlineInfo.label}
               </span>

@@ -19,7 +19,7 @@ import {
 } from "@/lib/delete-store";
 import { TaskCard } from "@/components/TaskCard";
 import { todayString, addDays } from "@/lib/date";
-import { formatOverdueLabel } from "@/lib/format";
+import { formatDaysUntil } from "@/lib/format";
 import type { Task } from "@/lib/types";
 
 const HORIZON_DAYS = 7;
@@ -181,7 +181,7 @@ export default function TodayPage() {
           <TaskCard
             key={task.id}
             task={task}
-            overdueLabel={formatOverdueLabel(task.scheduledDate as string)}
+            overdueLabel={formatDaysUntil(task.scheduledDate as string).label}
             onToggleDone={toggleDone}
             onDelete={remove}
             onUpdate={update}

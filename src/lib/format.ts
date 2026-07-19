@@ -1,45 +1,36 @@
-const WEEKDAYS_UA = ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+function pluralDays(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return "день";
+  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return "дні";
+  return "днів";
+}
 
-export interface DeadlineInfo {
+export type DateTone = "today" | "future" | "overdue";
+
+export interface DaysUntilInfo {
   label: string;
+  tone: DateTone;
+  /** @deprecated kept for callers that only care about red vs not-red */
   overdue: boolean;
 }
 
-export function formatDeadline(deadline: string, now: Date = new Date()): DeadlineInfo {
-  const [y, m, d] = deadline.split("-").map(Number);
+/**
+ * Day-count label for a date, used for both deadlines and overdue
+ * scheduled days: "сьогодні" / "завтра" / "3 дні" / "5 днів" / "вчора" /
+ * "2 дні тому". No raw dates — those only appear in the edit form.
+ */
+export function formatDaysUntil(dateStr: string, now: Date = new Date()): DaysUntilInfo {
+  const [y, m, d] = dateStr.split("-").map(Number);
   const target = new Date(y, m - 1, d);
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
+  const diff = Math.round((target.getTime() - today.getTime()) / 86400000);
 
-  const shortDate = `${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")}${
-    target.getFullYear() !== today.getFullYear() ? `.${target.getFullYear()}` : ""
-  }`;
+  if (diff === 0) return { label: "сьогодні", tone: "today", overdue: false };
+  if (diff === 1) return { label: "завтра", tone: "future", overdue: false };
+  if (diff > 1) return { label: `${diff} ${pluralDays(diff)}`, tone: "future", overdue: false };
 
-  if (diffDays === 0) return { label: "сьогодні", overdue: false };
-  if (diffDays === 1) return { label: "завтра", overdue: false };
-  if (diffDays === -1) return { label: "вчора", overdue: true };
-  if (diffDays < 0) return { label: shortDate, overdue: true };
-  if (diffDays <= 6) return { label: `до ${WEEKDAYS_UA[target.getDay()]}`, overdue: false };
-  return { label: shortDate, overdue: false };
-}
-
-/** For a scheduledDate strictly before today: "вчора", "2 дні тому", "5 днів тому". */
-export function formatOverdueLabel(scheduledDate: string, now: Date = new Date()): string {
-  const [y, m, d] = scheduledDate.split("-").map(Number);
-  const target = new Date(y, m - 1, d);
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const daysAgo = Math.round((today.getTime() - target.getTime()) / 86400000);
-
-  if (daysAgo <= 1) return "вчора";
-
-  const mod10 = daysAgo % 10;
-  const mod100 = daysAgo % 100;
-  const word =
-    mod10 === 1 && mod100 !== 11
-      ? "день"
-      : [2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)
-        ? "дні"
-        : "днів";
-
-  return `${daysAgo} ${word} тому`;
+  const daysAgo = Math.abs(diff);
+  if (daysAgo === 1) return { label: "вчора", tone: "overdue", overdue: true };
+  return { label: `${daysAgo} ${pluralDays(daysAgo)} тому`, tone: "overdue", overdue: true };
 }

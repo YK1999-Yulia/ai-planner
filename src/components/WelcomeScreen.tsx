@@ -5,7 +5,8 @@ export function WelcomeScreen({ onStart }: { onStart: () => void }) {
         AI Планер
       </h1>
       <p className="mb-8 text-lg text-neutral-400">
-        Вивали з голови все, що треба зробити — AI перетворить це на план дня.
+        Поділись усім, що тримаєш у голові — я перетворю це на чіткий план
+        твого дня.
       </p>
       <button
         onClick={onStart}

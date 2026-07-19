@@ -228,7 +228,7 @@ export default function CapturePage() {
         Що в голові?
       </h1>
       <p className="mb-4 text-sm text-neutral-400">
-        Вивали все одним текстом — AI розкладе по задачах.
+        Просто пиши як думається — я розберу на задачі.
       </p>
 
       <textarea
