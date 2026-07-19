@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { addTasks } from "@/lib/tasks-storage";
+import { addTasks, loadTasks } from "@/lib/tasks-storage";
 import { PRIORITY_LABELS } from "@/lib/priority";
 import { dayOptions, formatShortDate } from "@/lib/date";
 import { hasSeenWelcome, markWelcomeSeen, hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
@@ -22,7 +22,9 @@ export default function CapturePage() {
   const [showPreviewTip, setShowPreviewTip] = useState(false);
 
   useEffect(() => {
-    setWelcomeSeen(hasSeenWelcome());
+    const forced = new URLSearchParams(window.location.search).get("welcome") === "1";
+    const isNewUser = !hasSeenWelcome() && loadTasks().length === 0;
+    setWelcomeSeen(!(forced || isNewUser));
   }, []);
 
   async function parse(inputText: string) {
