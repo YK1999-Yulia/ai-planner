@@ -32,6 +32,7 @@ import {
 } from "@/lib/date";
 import { pluralTasks, formatDuration } from "@/lib/format";
 import { PRIORITY_DOT_COLORS } from "@/lib/priority";
+import { getWeekSummary, saveWeekSummary } from "@/lib/week-summary-storage";
 import { isArchived } from "@/lib/archive";
 import { vibrate } from "@/lib/haptics";
 import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
@@ -91,6 +92,10 @@ export default function WeekPage() {
   const [preview, setPreview] = useState<PreviewRow[] | null>(null);
   const [showTip, setShowTip] = useState(() => !hasSeenTip("week"));
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [pendingSummary, setPendingSummary] = useState<string | null>(null);
+  const [summaryRefreshing, setSummaryRefreshing] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [showFullWeekList, setShowFullWeekList] = useState(false);
   const pendingDelete = useSyncExternalStore(
     subscribeDelete,
     getPendingDelete,
@@ -191,6 +196,7 @@ export default function WeekPage() {
         return { id: a.id, title: task?.title ?? "", scheduledDate: a.scheduledDate };
       });
       setPreview(rows);
+      setPendingSummary(typeof data.weekSummary === "string" ? data.weekSummary : null);
     } catch (err) {
       console.error(err);
       setError(AI_ERROR_MESSAGE);
@@ -213,9 +219,58 @@ export default function WeekPage() {
     for (const row of preview) {
       updateTaskById(row.id, { scheduledDate: row.scheduledDate });
     }
+    if (pendingSummary) {
+      const appliedIds = new Set(preview.map((r) => r.id));
+      const finalTaskIds = [
+        ...weekSummaryTasks.filter((t) => !appliedIds.has(t.id)).map((t) => t.id),
+        ...preview.map((r) => r.id),
+      ];
+      saveWeekSummary(weekKey, finalTaskIds, pendingSummary);
+    }
     setPreview(null);
+    setPendingSummary(null);
     setShowSuccessToast(true);
     setTimeout(() => setShowSuccessToast(false), 3000);
+  }
+
+  async function refreshWeekSummary() {
+    vibrate(10);
+    if (weekSummaryTasks.length === 0) return;
+    setSummaryRefreshing(true);
+    setSummaryError(null);
+    try {
+      const res = await fetch("/api/week-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tasks: weekSummaryTasks.map((t) => ({
+            id: t.id,
+            title: t.title,
+            priority: t.priority,
+            estimatedMinutes: t.estimatedMinutes,
+            deadline: t.deadline,
+            scheduledDate: t.scheduledDate,
+          })),
+          today,
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        console.error(data.error);
+        setSummaryError(AI_ERROR_MESSAGE);
+        return;
+      }
+      saveWeekSummary(
+        weekKey,
+        weekSummaryTasks.map((t) => t.id),
+        data.summary,
+      );
+    } catch (err) {
+      console.error(err);
+      setSummaryError(AI_ERROR_MESSAGE);
+    } finally {
+      setSummaryRefreshing(false);
+    }
   }
 
   const dates = weekDates(weekOffset);
@@ -224,6 +279,15 @@ export default function WeekPage() {
   const unscheduledCount = visibleTasks.filter(
     (t) => t.scheduledDate === null && t.completedAt === null,
   ).length;
+  const weekKey = dates[0];
+  const weekSummaryTasks = visibleTasks.filter(
+    (t) =>
+      t.scheduledDate !== null &&
+      dates.includes(t.scheduledDate) &&
+      !isArchived(t) &&
+      !t.isExample,
+  );
+  const storedSummary = getWeekSummary(weekKey);
 
   if (preview) {
     return (
@@ -488,25 +552,59 @@ export default function WeekPage() {
             )}
           </div>
 
-          {weekListTasks.length > 0 && (
-            <div>
-              <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-white">
-                Задачі цього тижня
-              </h2>
-              <div className="flex flex-col gap-3">
-                {weekListTasks.map((task, index) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    index={index}
-                    compact
-                    dayLabel={WEEKDAY_SHORT[weekdayIndex(task.scheduledDate as string)]}
-                    onToggleDone={toggleDone}
-                    onDelete={remove}
-                    onUpdate={update}
-                  />
-                ))}
+          {weekSummaryTasks.length > 0 && (
+            <div className="mb-6 rounded-2xl bg-card p-4">
+              <div className="mb-2 flex items-start justify-between gap-2">
+                <p className="flex-1 text-sm text-neutral-200">
+                  {storedSummary
+                    ? storedSummary.summary
+                    : `На цей тиждень: ${weekSummaryTasks.length} ${pluralTasks(weekSummaryTasks.length)} · ${formatDuration(
+                        weekSummaryTasks.reduce(
+                          (sum, t) =>
+                            sum + (t.estimatedMinutes && t.estimatedMinutes > 0 ? t.estimatedMinutes : 30),
+                          0,
+                        ),
+                      )}`}
+                </p>
+                <button
+                  onClick={refreshWeekSummary}
+                  disabled={summaryRefreshing}
+                  aria-label="Оновити резюме тижня"
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base text-neutral-400 disabled:opacity-40 ${TAP_ACTIVE}`}
+                >
+                  {summaryRefreshing ? (
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-neutral-500/40 border-t-neutral-300" />
+                  ) : (
+                    "↻"
+                  )}
+                </button>
               </div>
+              {summaryError && <p className="mb-2 text-xs text-red-400">{summaryError}</p>}
+              {weekListTasks.length > 0 && (
+                <button
+                  onClick={() => setShowFullWeekList((v) => !v)}
+                  className={`text-xs font-medium text-accent ${TAP_ACTIVE}`}
+                >
+                  {showFullWeekList ? "Згорнути список" : "Переглянути всі задачі тижня"}
+                </button>
+              )}
+            </div>
+          )}
+
+          {showFullWeekList && weekListTasks.length > 0 && (
+            <div className="mb-6 flex flex-col gap-3 animate-[fadeInUp_0.2s_ease-out_backwards]">
+              {weekListTasks.map((task, index) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  index={index}
+                  compact
+                  dayLabel={WEEKDAY_SHORT[weekdayIndex(task.scheduledDate as string)]}
+                  onToggleDone={toggleDone}
+                  onDelete={remove}
+                  onUpdate={update}
+                />
+              ))}
             </div>
           )}
         </>

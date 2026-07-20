@@ -35,8 +35,13 @@ const planWeekTool = {
           required: ["id", "scheduled_date"],
         },
       },
+      week_summary: {
+        type: "string",
+        description:
+          "1-2 речення природною мовою про головне цього тижня (з урахуванням і вже запланованих задач, і щойно розподілених) та загальну картину.",
+      },
     },
-    required: ["assignments"],
+    required: ["assignments", "week_summary"],
   },
 };
 
@@ -92,7 +97,11 @@ ${taskLines}
 - Якщо дедлайн уже сьогодні або в минулому — постав на сьогодні (${today}).
 - Задачі з вищим пріоритетом (high) став раніше в тижні.
 - Намагайся рівномірно розподілити навантаження між днями, враховуючи вже заплановані задачі.
-- Признач день для КОЖНОЇ задачі зі списку кандидатів — жодну не пропускай.`;
+- Признач день для КОЖНОЇ задачі зі списку кандидатів — жодну не пропускай.
+- Додатково напиши week_summary: 1-2 речення природною українською мовою про головне цього тижня
+  (найважливіші задачі, дедлайни) і загальну картину (скільки ще дрібних справ, приблизно скільки
+  часу). Тон дружній, розмовний, без канцеляриту. Приклад: "Головне цього тижня — доробити
+  презентацію до п'ятниці. Ще на горизонті: 2 дзвінки і кілька дрібних справ (~6 год загалом)".`;
 
   try {
     const anthropic = new Anthropic({ apiKey });
@@ -117,7 +126,7 @@ ${taskLines}
       );
     }
 
-    const input = toolUse.input as { assignments?: unknown[] };
+    const input = toolUse.input as { assignments?: unknown[]; week_summary?: unknown };
     const validIds = new Set(tasks.map((t) => t.id));
     const validDates = new Set(weekDates);
 
@@ -132,7 +141,9 @@ ${taskLines}
       )
       .map((a) => ({ id: a.id, scheduledDate: a.scheduled_date }));
 
-    return NextResponse.json({ ok: true, assignments });
+    const weekSummary = typeof input.week_summary === "string" ? input.week_summary : "";
+
+    return NextResponse.json({ ok: true, assignments, weekSummary });
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Невідома помилка" },
