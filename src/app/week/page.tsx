@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import {
   subscribeTasks,
   getTasksSnapshot,
@@ -302,25 +303,47 @@ export default function WeekPage() {
         />
       )}
 
-      <button
-        onClick={distributeWeek}
-        disabled={distributing || unscheduledCount === 0}
-        className={`mb-1 w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
-      >
-        {distributing ? (
-          <span className="flex items-center justify-center gap-2">
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground" />
-            Розкладаю...
-          </span>
-        ) : unscheduledCount === 0 ? (
-          "Всі задачі вже розкладені ✓"
-        ) : (
-          `Розкласти по днях (${unscheduledCount})`
-        )}
-      </button>
-      <p className="mb-4 text-xs text-neutral-500">
-        Розкидаю незаплановані задачі по днях тижня — з огляду на дедлайни і пріоритети
-      </p>
+      {allTasks.length === 0 ? (
+        <div className="mb-4 rounded-2xl bg-card p-5 text-center">
+          <p className="mb-3 text-neutral-300">Поки нема що розкладати</p>
+          <Link
+            href="/"
+            className={`inline-block rounded-full bg-accent px-6 py-3 text-base font-semibold text-accent-foreground ${TAP_ACTIVE}`}
+          >
+            Занотувати першу задачу
+          </Link>
+        </div>
+      ) : unscheduledCount === 0 ? (
+        <div className="mb-4 rounded-2xl bg-card p-5 text-center">
+          <p className="mb-3 font-medium text-neutral-300">Всі задачі вже розкладені ✓</p>
+          <Link
+            href="/"
+            className={`inline-block rounded-full bg-neutral-800 px-5 py-2.5 text-sm font-medium text-neutral-200 ${TAP_ACTIVE}`}
+          >
+            Занотувати нову
+          </Link>
+        </div>
+      ) : (
+        <>
+          <button
+            onClick={distributeWeek}
+            disabled={distributing}
+            className={`mb-1 w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
+          >
+            {distributing ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground" />
+                Розкладаю...
+              </span>
+            ) : (
+              `Розкласти по днях (${unscheduledCount})`
+            )}
+          </button>
+          <p className="mb-4 text-xs text-neutral-500">
+            Розкидаю незаплановані задачі по днях тижня — з огляду на дедлайни і пріоритети
+          </p>
+        </>
+      )}
 
       {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
 
@@ -391,13 +414,19 @@ export default function WeekPage() {
           {selectedDayTasks.length === 0 ? (
             <div className="flex flex-col items-center py-8 text-center">
               <p className="mb-4 text-neutral-400">На цей день нічого не заплановано</p>
-              <button
-                onClick={distributeWeek}
-                disabled={distributing}
-                className={`rounded-full bg-neutral-800 px-6 py-3 text-base text-neutral-300 disabled:opacity-40 ${TAP_ACTIVE}`}
-              >
-                Розкласти по днях
-              </button>
+              {unscheduledCount === 0 ? (
+                <p className="text-sm font-medium text-neutral-400">
+                  Всі задачі вже розкладені ✓
+                </p>
+              ) : (
+                <button
+                  onClick={distributeWeek}
+                  disabled={distributing}
+                  className={`rounded-full bg-neutral-800 px-6 py-3 text-base text-neutral-300 disabled:opacity-40 ${TAP_ACTIVE}`}
+                >
+                  {distributing ? "Розкладаю..." : `Розкласти по днях (${unscheduledCount})`}
+                </button>
+              )}
             </div>
           ) : (
             <div className="flex flex-col gap-3">
