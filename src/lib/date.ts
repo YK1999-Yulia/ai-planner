@@ -87,7 +87,7 @@ export function dayOptions(referenceDate: Date = new Date()): DayOption[] {
   const nextWeek = weekDates(1, referenceDate);
 
   const options: DayOption[] = [
-    { value: null, label: "Без дня" },
+    { value: null, label: "Обрати день" },
     { value: today, label: "Сьогодні" },
     { value: tomorrow, label: "Завтра" },
   ];

@@ -6,6 +6,7 @@ import { formatDaysUntil, formatDuration } from "@/lib/format";
 import { vibrate } from "@/lib/haptics";
 import { TAP_ACTIVE } from "@/lib/ui";
 import { DaySelect } from "@/components/DaySelect";
+import { DeadlineSelect } from "@/components/DeadlineSelect";
 import { DurationSelect } from "@/components/DurationSelect";
 import type { Priority, Task } from "@/lib/types";
 
@@ -146,29 +147,27 @@ export function TaskCard({
           <DaySelect
             value={task.scheduledDate}
             onChange={(value) => onUpdate(task.id, { scheduledDate: value })}
-            className="mb-3 w-full rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
+            className="mb-3 w-full"
           />
 
-          <div className="mb-3 flex flex-wrap gap-2 text-sm">
-            <select
-              value={task.priority}
-              onChange={(e) => onUpdate(task.id, { priority: e.target.value as Priority })}
-              className="rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
-            >
-              {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
+          <label className="mb-1 block text-xs text-neutral-400">Дедлайн</label>
+          <DeadlineSelect
+            value={task.deadline}
+            onChange={(value) => onUpdate(task.id, { deadline: value })}
+            className="mb-3 w-full"
+          />
 
-            <input
-              type="date"
-              value={task.deadline ?? ""}
-              onChange={(e) => onUpdate(task.id, { deadline: e.target.value || null })}
-              className="rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
-            />
-          </div>
+          <select
+            value={task.priority}
+            onChange={(e) => onUpdate(task.id, { priority: e.target.value as Priority })}
+            className="mb-3 rounded-lg bg-neutral-800 px-2 py-2 text-sm text-neutral-200"
+          >
+            {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
 
           <label className="mb-1 block text-xs text-neutral-400">Тривалість</label>
           <DurationSelect

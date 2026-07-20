@@ -14,6 +14,7 @@ import { TAP_ACTIVE } from "@/lib/ui";
 import { AI_ERROR_MESSAGE } from "@/lib/errors";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { DaySelect } from "@/components/DaySelect";
+import { DeadlineSelect } from "@/components/DeadlineSelect";
 import { DurationSelect } from "@/components/DurationSelect";
 import { TipBanner } from "@/components/TipBanner";
 import type { ParsedTaskDraft, Priority, Task } from "@/lib/types";
@@ -187,34 +188,32 @@ export default function CapturePage() {
                 <DaySelect
                   value={draft.scheduledDate}
                   onChange={(value) => updateDraft(index, { scheduledDate: value })}
-                  className="w-full rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
+                  className="w-full"
                 />
               </div>
 
-              <div className="mb-3 flex flex-wrap gap-2 text-sm">
-                <select
-                  value={draft.priority}
-                  onChange={(e) =>
-                    updateDraft(index, { priority: e.target.value as Priority })
-                  }
-                  className="rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
-                >
-                  {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-
-                <input
-                  type="date"
-                  value={draft.deadline ?? ""}
-                  onChange={(e) =>
-                    updateDraft(index, { deadline: e.target.value || null })
-                  }
-                  className="rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
+              <div className="mb-3">
+                <label className="mb-1 block text-xs text-neutral-500">Дедлайн</label>
+                <DeadlineSelect
+                  value={draft.deadline}
+                  onChange={(value) => updateDraft(index, { deadline: value })}
+                  className="w-full"
                 />
               </div>
+
+              <select
+                value={draft.priority}
+                onChange={(e) =>
+                  updateDraft(index, { priority: e.target.value as Priority })
+                }
+                className="mb-3 rounded-lg bg-neutral-800 px-2 py-2 text-sm text-neutral-200"
+              >
+                {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
 
               <DurationSelect
                 value={draft.estimatedMinutes}

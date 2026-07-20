@@ -245,7 +245,7 @@ export default function WeekPage() {
                 value={row.scheduledDate}
                 onChange={(value) => updatePreviewRow(row.id, value)}
                 excludeNone
-                className="rounded-lg bg-neutral-800 px-2 py-2 text-sm text-neutral-200"
+                className="w-32 shrink-0"
               />
             </div>
           ))}
