@@ -33,3 +33,11 @@ export const PRIORITY_STRIPE_COLORS: Record<Priority, string> = {
   low: "border-l-transparent",
   none: "border-l-transparent",
 };
+
+/** Small filled-dot background per priority, e.g. the Week day-strip indicators. */
+export const PRIORITY_DOT_COLORS: Record<Priority, string> = {
+  high: "bg-priority-high",
+  medium: "bg-priority-medium",
+  low: "bg-priority-low",
+  none: "bg-neutral-500",
+};

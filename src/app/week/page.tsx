@@ -31,6 +31,7 @@ import {
   weekdayIndex,
 } from "@/lib/date";
 import { pluralTasks, formatDuration } from "@/lib/format";
+import { PRIORITY_DOT_COLORS } from "@/lib/priority";
 import { isArchived } from "@/lib/archive";
 import { vibrate } from "@/lib/haptics";
 import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
@@ -372,9 +373,14 @@ export default function WeekPage() {
         {dates.map((date) => {
           const isToday = date === today;
           const isSelected = date === selectedDate;
-          const count = visibleTasks.filter(
+          const dayTasks = visibleTasks.filter(
             (t) => t.scheduledDate === date && t.completedAt === null,
-          ).length;
+          );
+          const count = dayTasks.length;
+          const topPriority = dayTasks.reduce<Priority | null>((top, t) => {
+            if (top === null || PRIORITY_RANK[t.priority] < PRIORITY_RANK[top]) return t.priority;
+            return top;
+          }, null);
           const dayNum = Number(date.split("-")[2]);
 
           return (
@@ -391,15 +397,27 @@ export default function WeekPage() {
             >
               <span className="text-xs">{WEEKDAY_SHORT[weekdayIndex(date)]}</span>
               <span className="text-base font-semibold">{dayNum}</span>
-              <span className="flex h-1.5 gap-0.5">
-                {Array.from({ length: Math.min(count, 3) }).map((_, i) => (
+              <span className="flex h-3 items-center justify-center">
+                {count === 0 ? null : count >= 4 ? (
                   <span
-                    key={i}
-                    className={`h-1 w-1 rounded-full ${
-                      isSelected ? "bg-accent-foreground" : "bg-current"
+                    className={`text-[10px] font-semibold ${
+                      isSelected ? "text-accent-foreground" : "text-neutral-300"
                     }`}
-                  />
-                ))}
+                  >
+                    {count}
+                  </span>
+                ) : (
+                  <span className="flex gap-0.5">
+                    {Array.from({ length: count }).map((_, i) => (
+                      <span
+                        key={i}
+                        className={`h-1 w-1 rounded-full ${
+                          isSelected ? "bg-accent-foreground" : PRIORITY_DOT_COLORS[topPriority as Priority]
+                        }`}
+                      />
+                    ))}
+                  </span>
+                )}
               </span>
             </button>
           );
