@@ -25,7 +25,7 @@ import {
 } from "@/lib/delete-store";
 import { TaskCard } from "@/components/TaskCard";
 import { todayString, addDays } from "@/lib/date";
-import { formatDaysUntil, pluralTasks, formatHoursApprox } from "@/lib/format";
+import { formatDaysUntil, pluralTasks, formatDuration } from "@/lib/format";
 import { isArchived } from "@/lib/archive";
 import { vibrate } from "@/lib/haptics";
 import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
@@ -206,7 +206,7 @@ export default function TodayPage() {
       ? null
       : allDone
         ? "Все зроблено. Ти молодець ✨"
-        : `${activeTodayCount} ${pluralTasks(activeTodayCount)} на сьогодні · ${formatHoursApprox(activeTodayMinutes)}`;
+        : `${activeTodayCount} ${pluralTasks(activeTodayCount)} на сьогодні · ${formatDuration(activeTodayMinutes)}`;
 
   const overdueSection = overdueTasks.length > 0 && (
     <div className="mb-6 rounded-2xl bg-red-500/10 p-4">

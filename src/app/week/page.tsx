@@ -29,7 +29,7 @@ import {
   MONTH_GENITIVE,
   weekdayIndex,
 } from "@/lib/date";
-import { pluralTasks, formatHoursApprox } from "@/lib/format";
+import { pluralTasks, formatDuration } from "@/lib/format";
 import { isArchived } from "@/lib/archive";
 import { vibrate } from "@/lib/haptics";
 import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
@@ -67,7 +67,7 @@ function formatDayPanelHeader(date: string, tasks: Task[]): string {
     (sum, t) => sum + (t.estimatedMinutes && t.estimatedMinutes > 0 ? t.estimatedMinutes : 30),
     0,
   );
-  return `${dayLabel} · ${tasks.length} ${pluralTasks(tasks.length)} · ${formatHoursApprox(minutes)}`;
+  return `${dayLabel} · ${tasks.length} ${pluralTasks(tasks.length)} · ${formatDuration(minutes)}`;
 }
 
 interface PreviewRow {

@@ -14,6 +14,7 @@ import { TAP_ACTIVE } from "@/lib/ui";
 import { AI_ERROR_MESSAGE } from "@/lib/errors";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { DaySelect } from "@/components/DaySelect";
+import { DurationSelect } from "@/components/DurationSelect";
 import { TipBanner } from "@/components/TipBanner";
 import type { ParsedTaskDraft, Priority, Task } from "@/lib/types";
 
@@ -190,7 +191,7 @@ export default function CapturePage() {
                 />
               </div>
 
-              <div className="flex flex-wrap gap-2 text-sm">
+              <div className="mb-3 flex flex-wrap gap-2 text-sm">
                 <select
                   value={draft.priority}
                   onChange={(e) =>
@@ -206,19 +207,6 @@ export default function CapturePage() {
                 </select>
 
                 <input
-                  type="number"
-                  min={5}
-                  value={draft.estimatedMinutes ?? ""}
-                  onChange={(e) =>
-                    updateDraft(index, {
-                      estimatedMinutes: e.target.value ? Math.max(5, Number(e.target.value)) : null,
-                    })
-                  }
-                  placeholder="хв"
-                  className="w-20 rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
-                />
-
-                <input
                   type="date"
                   value={draft.deadline ?? ""}
                   onChange={(e) =>
@@ -227,6 +215,11 @@ export default function CapturePage() {
                   className="rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
                 />
               </div>
+
+              <DurationSelect
+                value={draft.estimatedMinutes}
+                onChange={(minutes) => updateDraft(index, { estimatedMinutes: minutes })}
+              />
             </div>
           ))}
         </div>

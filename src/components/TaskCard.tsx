@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { PRIORITY_LABELS, PRIORITY_CHIP_STYLES, PRIORITY_STRIPE_COLORS } from "@/lib/priority";
-import { formatDaysUntil } from "@/lib/format";
+import { formatDaysUntil, formatDuration } from "@/lib/format";
 import { vibrate } from "@/lib/haptics";
 import { TAP_ACTIVE } from "@/lib/ui";
 import { DaySelect } from "@/components/DaySelect";
+import { DurationSelect } from "@/components/DurationSelect";
 import type { Priority, Task } from "@/lib/types";
 
 const STAGGER_MS = 35;
@@ -100,7 +101,7 @@ export function TaskCard({
               {PRIORITY_LABELS[task.priority]}
             </span>
             {Boolean(task.estimatedMinutes) && (
-              <span className="text-neutral-400">{task.estimatedMinutes} хв</span>
+              <span className="text-neutral-400">{formatDuration(task.estimatedMinutes as number)}</span>
             )}
             {deadlineInfo && (
               <span
@@ -148,7 +149,7 @@ export function TaskCard({
             className="mb-3 w-full rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
           />
 
-          <div className="flex flex-wrap gap-2 text-sm">
+          <div className="mb-3 flex flex-wrap gap-2 text-sm">
             <select
               value={task.priority}
               onChange={(e) => onUpdate(task.id, { priority: e.target.value as Priority })}
@@ -162,25 +163,18 @@ export function TaskCard({
             </select>
 
             <input
-              type="number"
-              min={5}
-              value={task.estimatedMinutes ?? ""}
-              onChange={(e) =>
-                onUpdate(task.id, {
-                  estimatedMinutes: e.target.value ? Math.max(5, Number(e.target.value)) : null,
-                })
-              }
-              placeholder="хв"
-              className="w-20 rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
-            />
-
-            <input
               type="date"
               value={task.deadline ?? ""}
               onChange={(e) => onUpdate(task.id, { deadline: e.target.value || null })}
               className="rounded-lg bg-neutral-800 px-2 py-2 text-neutral-200"
             />
           </div>
+
+          <label className="mb-1 block text-xs text-neutral-400">Тривалість</label>
+          <DurationSelect
+            value={task.estimatedMinutes}
+            onChange={(minutes) => onUpdate(task.id, { estimatedMinutes: minutes })}
+          />
         </div>
       )}
     </div>

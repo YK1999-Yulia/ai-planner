@@ -43,10 +43,15 @@ export function pluralTasks(n: number): string {
   return "задач";
 }
 
-export function formatHoursApprox(totalMinutes: number): string {
-  const hours = totalMinutes / 60;
+/**
+ * Human duration label used everywhere a task/plan duration is shown:
+ * "30 хв", "1.5 год", "2 год", "6 год" — never raw minutes like "90 хв".
+ */
+export function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes} хв`;
+  const hours = minutes / 60;
   const rounded = Number.isInteger(hours) ? `${hours}` : hours.toFixed(1);
-  return `~${rounded} год`;
+  return `${rounded} год`;
 }
 
 /** Time-of-day greeting; omits the name gracefully if none is set. */
