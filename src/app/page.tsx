@@ -243,7 +243,7 @@ export default function CapturePage() {
   }
 
   return (
-    <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
+    <main className="flex min-h-[calc(100dvh-4rem)] flex-col px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
       <div className="mb-1 flex items-center justify-between">
         <p className="text-lg font-medium text-neutral-300">{getGreeting(userName)}</p>
         <Link
@@ -265,13 +265,13 @@ export default function CapturePage() {
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder={EXAMPLE_TEXT}
-        rows={10}
-        className="w-full resize-none rounded-2xl bg-card p-5 text-base text-white outline-none placeholder:text-neutral-500"
+        rows={4}
+        className="w-full min-h-0 flex-1 resize-none rounded-2xl bg-card p-5 text-base text-white outline-none placeholder:text-neutral-500"
       />
 
       {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
 
-      <div className="mt-4 flex flex-col gap-2">
+      <div className="mt-4 flex shrink-0 flex-col gap-2">
         <button
           onClick={handleSubmit}
           disabled={!text.trim() || loading}
