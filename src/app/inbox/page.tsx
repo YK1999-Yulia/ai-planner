@@ -21,7 +21,7 @@ import { hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import { TaskCard } from "@/components/TaskCard";
 import { TipBanner } from "@/components/TipBanner";
 import { isArchived } from "@/lib/archive";
-import { TAP_ACTIVE } from "@/lib/ui";
+import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
 import type { Priority, Task } from "@/lib/types";
 
 const PRIORITY_RANK: Record<Priority, number> = {
@@ -179,7 +179,7 @@ export default function InboxPage() {
           </span>
           <button
             onClick={undoDelete}
-            className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_ACTIVE}`}
+            className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_TARGET_44} ${TAP_ACTIVE}`}
           >
             Повернути
           </button>

@@ -18,7 +18,7 @@ import {
   undoPendingDelete,
 } from "@/lib/delete-store";
 import { isArchived, completedDateString, formatArchiveGroupLabel } from "@/lib/archive";
-import { TAP_ACTIVE } from "@/lib/ui";
+import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
 import type { Task } from "@/lib/types";
 
 function ArchiveCard({
@@ -53,7 +53,7 @@ function ArchiveCard({
         <button
           onClick={onDelete}
           aria-label="Видалити назавжди"
-          className={`flex h-9 w-9 items-center justify-center rounded-full text-lg text-neutral-500 ${TAP_ACTIVE}`}
+          className={`flex h-11 w-11 items-center justify-center rounded-full text-lg text-neutral-500 ${TAP_ACTIVE}`}
         >
           ✕
         </button>
@@ -110,7 +110,7 @@ export default function ArchivePage() {
         <Link
           href="/inbox"
           aria-label="Назад до Вхідних"
-          className={`text-xl text-neutral-400 ${TAP_ACTIVE}`}
+          className={`text-xl text-neutral-400 ${TAP_TARGET_44} ${TAP_ACTIVE}`}
         >
           ←
         </Link>
@@ -153,7 +153,7 @@ export default function ArchivePage() {
           </span>
           <button
             onClick={undoDelete}
-            className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_ACTIVE}`}
+            className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_TARGET_44} ${TAP_ACTIVE}`}
           >
             Повернути
           </button>

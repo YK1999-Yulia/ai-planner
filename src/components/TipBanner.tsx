@@ -1,4 +1,4 @@
-import { TAP_ACTIVE } from "@/lib/ui";
+import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
 
 export function TipBanner({ text, onDismiss }: { text: string; onDismiss: () => void }) {
   return (
@@ -7,7 +7,7 @@ export function TipBanner({ text, onDismiss }: { text: string; onDismiss: () => 
       <button
         onClick={onDismiss}
         aria-label="Закрити підказку"
-        className={`shrink-0 text-neutral-500 ${TAP_ACTIVE}`}
+        className={`shrink-0 text-neutral-500 ${TAP_TARGET_44} ${TAP_ACTIVE}`}
       >
         ✕
       </button>

@@ -25,11 +25,14 @@ import {
   todayString,
   formatWeekRangeLabel,
   WEEKDAY_SHORT,
+  WEEKDAY_FULL,
+  MONTH_GENITIVE,
   weekdayIndex,
 } from "@/lib/date";
+import { pluralTasks, formatHoursApprox } from "@/lib/format";
 import { isArchived } from "@/lib/archive";
 import { vibrate } from "@/lib/haptics";
-import { TAP_ACTIVE } from "@/lib/ui";
+import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
 import { AI_ERROR_MESSAGE } from "@/lib/errors";
 import type { Priority, Task } from "@/lib/types";
 
@@ -54,6 +57,17 @@ function sortByDay(tasks: Task[]): Task[] {
     if (dayDiff !== 0) return dayDiff;
     return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
   });
+}
+
+function formatDayPanelHeader(date: string, tasks: Task[]): string {
+  const [, m, d] = date.split("-").map(Number);
+  const dayLabel = `${WEEKDAY_FULL[weekdayIndex(date)]}, ${d} ${MONTH_GENITIVE[m - 1]}`;
+  if (tasks.length === 0) return dayLabel;
+  const minutes = tasks.reduce(
+    (sum, t) => sum + (t.estimatedMinutes && t.estimatedMinutes > 0 ? t.estimatedMinutes : 30),
+    0,
+  );
+  return `${dayLabel} · ${tasks.length} ${pluralTasks(tasks.length)} · ${formatHoursApprox(minutes)}`;
 }
 
 interface PreviewRow {
@@ -253,17 +267,21 @@ export default function WeekPage() {
     visibleTasks.filter((t) => t.scheduledDate === today && !isArchived(t)),
   );
 
-  let weekListTasks = visibleTasks.filter(
-    (t) =>
-      t.scheduledDate !== null &&
-      t.scheduledDate !== today &&
-      dates.includes(t.scheduledDate) &&
-      !isArchived(t),
+  const weekListTasks = sortByDay(
+    visibleTasks.filter(
+      (t) =>
+        t.scheduledDate !== null &&
+        t.scheduledDate !== today &&
+        dates.includes(t.scheduledDate) &&
+        !isArchived(t),
+    ),
   );
-  if (selectedDate) {
-    weekListTasks = weekListTasks.filter((t) => t.scheduledDate === selectedDate);
-  }
-  weekListTasks = sortByDay(weekListTasks);
+
+  const selectedDayTasks = selectedDate
+    ? sortByPriority(
+        visibleTasks.filter((t) => t.scheduledDate === selectedDate && !isArchived(t)),
+      )
+    : [];
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
@@ -293,7 +311,7 @@ export default function WeekPage() {
           onClick={() => setWeekOffset((o) => Math.max(0, o - 1))}
           disabled={weekOffset === 0}
           aria-label="Попередній тиждень"
-          className={`flex h-9 w-9 items-center justify-center rounded-full text-lg text-neutral-400 disabled:opacity-30 ${TAP_ACTIVE}`}
+          className={`flex h-11 w-11 items-center justify-center rounded-full text-lg text-neutral-400 disabled:opacity-30 ${TAP_ACTIVE}`}
         >
           ←
         </button>
@@ -303,7 +321,7 @@ export default function WeekPage() {
         <button
           onClick={() => setWeekOffset((o) => o + 1)}
           aria-label="Наступний тиждень"
-          className={`flex h-9 w-9 items-center justify-center rounded-full text-lg text-neutral-400 ${TAP_ACTIVE}`}
+          className={`flex h-11 w-11 items-center justify-center rounded-full text-lg text-neutral-400 ${TAP_ACTIVE}`}
         >
           →
         </button>
@@ -347,51 +365,86 @@ export default function WeekPage() {
         })}
       </div>
 
-      <div className="mb-6">
-        <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-white">
-          Сьогодні
-        </h2>
-        {todayTasks.length === 0 ? (
-          <p className="text-sm text-neutral-400">
-            На сьогодні нічого не заплановано. Тапни день у стрічці або розклади
-            тиждень 👆
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {todayTasks.map((task, index) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                index={index}
-                onToggleDone={toggleDone}
-                onDelete={remove}
-                onUpdate={update}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {weekListTasks.length > 0 && (
-        <div>
+      {selectedDate ? (
+        <div className="mb-6 animate-[fadeInUp_0.2s_ease-out_backwards]">
           <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-white">
-            Задачі цього тижня
+            {formatDayPanelHeader(selectedDate, selectedDayTasks)}
           </h2>
-          <div className="flex flex-col gap-3">
-            {weekListTasks.map((task, index) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                index={index}
-                compact
-                dayLabel={WEEKDAY_SHORT[weekdayIndex(task.scheduledDate as string)]}
-                onToggleDone={toggleDone}
-                onDelete={remove}
-                onUpdate={update}
-              />
-            ))}
-          </div>
+          {selectedDayTasks.length === 0 ? (
+            <div className="flex flex-col items-center py-8 text-center">
+              <p className="mb-4 text-neutral-400">На цей день нічого не заплановано</p>
+              <button
+                onClick={distributeWeek}
+                disabled={distributing}
+                className={`rounded-full bg-neutral-800 px-6 py-3 text-base text-neutral-300 disabled:opacity-40 ${TAP_ACTIVE}`}
+              >
+                Розкласти по днях
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {selectedDayTasks.map((task, index) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  index={index}
+                  onToggleDone={toggleDone}
+                  onDelete={remove}
+                  onUpdate={update}
+                />
+              ))}
+            </div>
+          )}
         </div>
+      ) : (
+        <>
+          <div className="mb-6">
+            <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-white">
+              Сьогодні
+            </h2>
+            {todayTasks.length === 0 ? (
+              <p className="text-sm text-neutral-400">
+                На сьогодні нічого не заплановано. Тапни день у стрічці або розклади
+                тиждень 👆
+              </p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {todayTasks.map((task, index) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    index={index}
+                    onToggleDone={toggleDone}
+                    onDelete={remove}
+                    onUpdate={update}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {weekListTasks.length > 0 && (
+            <div>
+              <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-white">
+                Задачі цього тижня
+              </h2>
+              <div className="flex flex-col gap-3">
+                {weekListTasks.map((task, index) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    index={index}
+                    compact
+                    dayLabel={WEEKDAY_SHORT[weekdayIndex(task.scheduledDate as string)]}
+                    onToggleDone={toggleDone}
+                    onDelete={remove}
+                    onUpdate={update}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {pendingDelete && (
@@ -401,7 +454,7 @@ export default function WeekPage() {
           </span>
           <button
             onClick={undoDelete}
-            className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_ACTIVE}`}
+            className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_TARGET_44} ${TAP_ACTIVE}`}
           >
             Повернути
           </button>

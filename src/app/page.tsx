@@ -173,7 +173,7 @@ export default function CapturePage() {
                 <button
                   onClick={() => removeDraft(index)}
                   aria-label="Видалити задачу"
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-neutral-500 ${TAP_ACTIVE}`}
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl text-neutral-500 ${TAP_ACTIVE}`}
                 >
                   ✕
                 </button>
@@ -257,7 +257,7 @@ export default function CapturePage() {
         <Link
           href="/settings"
           aria-label="Налаштування"
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-neutral-400 ${TAP_ACTIVE}`}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl text-neutral-400 ${TAP_ACTIVE}`}
         >
           ⚙
         </Link>

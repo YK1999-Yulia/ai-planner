@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getUserName, setUserName } from "@/lib/profile-storage";
 import { loadSettings, saveSettings, type DaySettings } from "@/lib/settings-storage";
 import { subscribeTasks, getTasksSnapshot, getTasksServerSnapshot, deleteTasksByIds } from "@/lib/tasks-store";
-import { TAP_ACTIVE } from "@/lib/ui";
+import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
 
 export default function SettingsPage() {
   const [name, setName] = useState(() => getUserName());
@@ -38,7 +38,11 @@ export default function SettingsPage() {
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
       <div className="mb-6 flex items-center gap-3">
-        <Link href="/" aria-label="Назад" className={`text-xl text-neutral-400 ${TAP_ACTIVE}`}>
+        <Link
+          href="/"
+          aria-label="Назад"
+          className={`text-xl text-neutral-400 ${TAP_TARGET_44} ${TAP_ACTIVE}`}
+        >
           ←
         </Link>
         <h1 className="font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">

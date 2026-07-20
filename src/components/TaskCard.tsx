@@ -61,13 +61,17 @@ export function TaskCard({
         <button
           onClick={handleToggleDone}
           aria-label={isDone ? "Позначити невиконаною" : "Позначити виконаною"}
-          className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${TAP_ACTIVE} ${
-            isDone
-              ? "border-accent bg-accent text-accent-foreground animate-[checkPop_0.2s_ease-out]"
-              : "border-neutral-600"
-          }`}
+          className={`-m-2.5 flex h-11 w-11 shrink-0 items-center justify-center ${TAP_ACTIVE}`}
         >
-          {isDone && "✓"}
+          <span
+            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
+              isDone
+                ? "border-accent bg-accent text-accent-foreground animate-[checkPop_0.2s_ease-out]"
+                : "border-neutral-600"
+            }`}
+          >
+            {isDone && "✓"}
+          </span>
         </button>
 
         <button
@@ -120,7 +124,7 @@ export function TaskCard({
         <button
           onClick={() => onDelete(task)}
           aria-label="Видалити задачу"
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-neutral-500 ${TAP_ACTIVE}`}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl text-neutral-500 ${TAP_ACTIVE}`}
         >
           ✕
         </button>

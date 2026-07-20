@@ -9,7 +9,11 @@ import {
   updateTaskById,
 } from "@/lib/tasks-store";
 import { loadSettings, type DaySettings } from "@/lib/settings-storage";
-import { hasGeneratedPlan, markPlanGenerated } from "@/lib/today-plan-storage";
+import {
+  hasGeneratedPlan,
+  markPlanGenerated,
+  getGeneratedPlanTaskIds,
+} from "@/lib/today-plan-storage";
 import {
   subscribeDelete,
   getPendingDelete,
@@ -24,7 +28,7 @@ import { todayString, addDays } from "@/lib/date";
 import { formatDaysUntil, pluralTasks, formatHoursApprox } from "@/lib/format";
 import { isArchived } from "@/lib/archive";
 import { vibrate } from "@/lib/haptics";
-import { TAP_ACTIVE } from "@/lib/ui";
+import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
 import { AI_ERROR_MESSAGE } from "@/lib/errors";
 import type { Task } from "@/lib/types";
 
@@ -127,7 +131,7 @@ export default function TodayPage() {
         });
       });
 
-      markPlanGenerated(today);
+      markPlanGenerated(today, data.orderedTaskIds as string[]);
     } catch (err) {
       console.error(err);
       setError(AI_ERROR_MESSAGE);
@@ -173,6 +177,13 @@ export default function TodayPage() {
     todayTasks.length > 0 ? Math.round((doneCount / todayTasks.length) * 100) : 0;
   const allDone = todayTasks.length > 0 && doneCount === todayTasks.length;
   const planGenerated = hasGeneratedPlan(today);
+  const planTaskIds = getGeneratedPlanTaskIds(today);
+  const currentTodayIds = todayTasks.map((t) => t.id).sort();
+  const planIsStale =
+    planGenerated &&
+    planTaskIds !== null &&
+    (planTaskIds.length !== currentTodayIds.length ||
+      planTaskIds.some((id, i) => id !== currentTodayIds[i]));
   const inboxHasTasks = allTasks.some(
     (t) => t.scheduledDate === null && t.completedAt === null,
   );
@@ -307,7 +318,13 @@ export default function TodayPage() {
 
         {!planGenerated && (
           <p className="mb-3 rounded-xl bg-accent/15 px-4 py-3 text-sm font-medium text-accent">
-            План ще не сформований — тисни кнопку нижче, щоб розставити задачі за часом
+            Сформуй план — я розставлю задачі по часу
+          </p>
+        )}
+
+        {planGenerated && planIsStale && (
+          <p className="mb-3 rounded-xl bg-accent/15 px-4 py-3 text-sm font-medium text-accent">
+            План застарів. Сформувати заново?
           </p>
         )}
 
@@ -333,7 +350,7 @@ export default function TodayPage() {
               key={task.id}
               task={task}
               index={index}
-              startTime={start}
+              startTime={planGenerated && !planIsStale ? start : undefined}
               onToggleDone={toggleDone}
               onDelete={remove}
               onUpdate={update}
@@ -368,7 +385,10 @@ export default function TodayPage() {
           <span className="truncate text-sm text-neutral-300">
             Видалено &middot; {pendingDelete.title}
           </span>
-          <button onClick={undoDelete} className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_ACTIVE}`}>
+          <button
+            onClick={undoDelete}
+            className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_TARGET_44} ${TAP_ACTIVE}`}
+          >
             Повернути
           </button>
         </div>
