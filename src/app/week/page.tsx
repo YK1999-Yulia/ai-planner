@@ -11,6 +11,8 @@ import {
   subscribeDelete,
   getPendingDelete,
   getPendingDeleteServerSnapshot,
+  getPendingDeleteIds,
+  getPendingDeleteIdsServerSnapshot,
   scheduleDelete,
   undoPendingDelete,
 } from "@/lib/delete-store";
@@ -28,6 +30,7 @@ import {
 import { isArchived } from "@/lib/archive";
 import { vibrate } from "@/lib/haptics";
 import { TAP_ACTIVE } from "@/lib/ui";
+import { AI_ERROR_MESSAGE } from "@/lib/errors";
 import type { Priority, Task } from "@/lib/types";
 
 const PRIORITY_RANK: Record<Priority, number> = {
@@ -75,6 +78,11 @@ export default function WeekPage() {
     subscribeDelete,
     getPendingDelete,
     getPendingDeleteServerSnapshot,
+  );
+  const pendingDeleteIds = useSyncExternalStore(
+    subscribeDelete,
+    getPendingDeleteIds,
+    getPendingDeleteIdsServerSnapshot,
   );
 
   function toggleDone(task: Task) {
@@ -150,7 +158,8 @@ export default function WeekPage() {
       });
       const data = await res.json();
       if (!data.ok) {
-        setError(data.error ?? "Не вдалося розподілити тиждень");
+        console.error(data.error);
+        setError(AI_ERROR_MESSAGE);
         return;
       }
       if (data.assignments.length === 0) {
@@ -165,8 +174,9 @@ export default function WeekPage() {
         return { id: a.id, title: task?.title ?? "", scheduledDate: a.scheduledDate };
       });
       setPreview(rows);
-    } catch {
-      setError("Не вдалося зв'язатися з сервером");
+    } catch (err) {
+      console.error(err);
+      setError(AI_ERROR_MESSAGE);
     } finally {
       setDistributing(false);
     }
@@ -191,7 +201,7 @@ export default function WeekPage() {
 
   const dates = weekDates(weekOffset);
   const today = todayString();
-  const visibleTasks = allTasks.filter((t) => t.id !== pendingDelete?.id);
+  const visibleTasks = allTasks.filter((t) => !pendingDeleteIds.includes(t.id));
 
   if (preview) {
     return (

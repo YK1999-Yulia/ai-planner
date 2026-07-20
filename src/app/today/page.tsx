@@ -14,6 +14,8 @@ import {
   subscribeDelete,
   getPendingDelete,
   getPendingDeleteServerSnapshot,
+  getPendingDeleteIds,
+  getPendingDeleteIdsServerSnapshot,
   scheduleDelete,
   undoPendingDelete,
 } from "@/lib/delete-store";
@@ -23,6 +25,7 @@ import { formatDaysUntil, pluralTasks, formatHoursApprox } from "@/lib/format";
 import { isArchived } from "@/lib/archive";
 import { vibrate } from "@/lib/haptics";
 import { TAP_ACTIVE } from "@/lib/ui";
+import { AI_ERROR_MESSAGE } from "@/lib/errors";
 import type { Task } from "@/lib/types";
 
 const HORIZON_DAYS = 7;
@@ -51,6 +54,11 @@ export default function TodayPage() {
     subscribeDelete,
     getPendingDelete,
     getPendingDeleteServerSnapshot,
+  );
+  const pendingDeleteIds = useSyncExternalStore(
+    subscribeDelete,
+    getPendingDeleteIds,
+    getPendingDeleteIdsServerSnapshot,
   );
 
   function toggleDone(task: Task) {
@@ -102,11 +110,13 @@ export default function TodayPage() {
           })),
           dayStart: settings.dayStart,
           dayEnd: settings.dayEnd,
+          today,
         }),
       });
       const data = await res.json();
       if (!data.ok) {
-        setError(data.error ?? "Не вдалося скласти план");
+        console.error(data.error);
+        setError(AI_ERROR_MESSAGE);
         return;
       }
 
@@ -118,8 +128,9 @@ export default function TodayPage() {
       });
 
       markPlanGenerated(today);
-    } catch {
-      setError("Не вдалося зв'язатися з сервером");
+    } catch (err) {
+      console.error(err);
+      setError(AI_ERROR_MESSAGE);
     } finally {
       setGenerating(false);
     }
@@ -127,7 +138,7 @@ export default function TodayPage() {
 
   const today = todayString();
   const horizonLimit = addDays(today, HORIZON_DAYS);
-  const visibleTasks = allTasks.filter((t) => t.id !== pendingDelete?.id);
+  const visibleTasks = allTasks.filter((t) => !pendingDeleteIds.includes(t.id));
 
   const todayTasks = visibleTasks
     .filter((t) => t.scheduledDate === today && !isArchived(t))

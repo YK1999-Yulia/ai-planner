@@ -12,6 +12,8 @@ import {
   subscribeDelete,
   getPendingDelete,
   getPendingDeleteServerSnapshot,
+  getPendingDeleteIds,
+  getPendingDeleteIdsServerSnapshot,
   scheduleDelete,
   undoPendingDelete,
 } from "@/lib/delete-store";
@@ -71,6 +73,11 @@ export default function ArchivePage() {
     getPendingDelete,
     getPendingDeleteServerSnapshot,
   );
+  const pendingDeleteIds = useSyncExternalStore(
+    subscribeDelete,
+    getPendingDeleteIds,
+    getPendingDeleteIdsServerSnapshot,
+  );
 
   function restore(task: Task) {
     updateTaskById(task.id, { completedAt: null, scheduledDate: null });
@@ -84,7 +91,7 @@ export default function ArchivePage() {
     undoPendingDelete();
   }
 
-  const archived = allTasks.filter((t) => isArchived(t) && t.id !== pendingDelete?.id);
+  const archived = allTasks.filter((t) => isArchived(t) && !pendingDeleteIds.includes(t.id));
 
   const groups = new Map<string, Task[]>();
   for (const task of archived) {

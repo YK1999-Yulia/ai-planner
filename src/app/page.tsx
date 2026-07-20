@@ -8,8 +8,10 @@ import { PRIORITY_LABELS } from "@/lib/priority";
 import { hasSeenWelcome, markWelcomeSeen, hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import { getUserName } from "@/lib/profile-storage";
 import { getGreeting } from "@/lib/format";
+import { todayString } from "@/lib/date";
 import { vibrate } from "@/lib/haptics";
 import { TAP_ACTIVE } from "@/lib/ui";
+import { AI_ERROR_MESSAGE } from "@/lib/errors";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { DaySelect } from "@/components/DaySelect";
 import { TipBanner } from "@/components/TipBanner";
@@ -45,11 +47,12 @@ export default function CapturePage() {
       const res = await fetch("/api/parse-tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: inputText }),
+        body: JSON.stringify({ text: inputText, today: todayString() }),
       });
       const data = await res.json();
       if (!data.ok) {
-        setError(data.error ?? "Не вдалося розібрати текст");
+        console.error(data.error);
+        setError(AI_ERROR_MESSAGE);
         return;
       }
       if (data.tasks.length === 0) {
@@ -61,8 +64,9 @@ export default function CapturePage() {
       setDrafts(data.tasks);
       setShowPreviewTip(!hasSeenTip("preview"));
       vibrate(20);
-    } catch {
-      setError("Не вдалося зв'язатися з сервером");
+    } catch (err) {
+      console.error(err);
+      setError(AI_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }

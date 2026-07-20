@@ -12,6 +12,8 @@ import {
   subscribeDelete,
   getPendingDelete,
   getPendingDeleteServerSnapshot,
+  getPendingDeleteIds,
+  getPendingDeleteIdsServerSnapshot,
   scheduleDelete,
   undoPendingDelete,
 } from "@/lib/delete-store";
@@ -55,6 +57,11 @@ export default function InboxPage() {
     subscribeDelete,
     getPendingDelete,
     getPendingDeleteServerSnapshot,
+  );
+  const pendingDeleteIds = useSyncExternalStore(
+    subscribeDelete,
+    getPendingDeleteIds,
+    getPendingDeleteIdsServerSnapshot,
   );
 
   const tasks = allTasks.filter((t) => t.scheduledDate === null && !isArchived(t));
@@ -104,7 +111,7 @@ export default function InboxPage() {
     );
   }
 
-  const visibleTasks = tasks.filter((t) => t.id !== pendingDelete?.id);
+  const visibleTasks = tasks.filter((t) => !pendingDeleteIds.includes(t.id));
   const active = sortActive(visibleTasks.filter((t) => t.completedAt === null));
   const done = sortDone(visibleTasks.filter((t) => t.completedAt !== null));
 

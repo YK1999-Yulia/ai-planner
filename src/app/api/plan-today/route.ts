@@ -1,6 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
-import { todayString } from "@/lib/date";
 
 interface CandidateTask {
   id: string;
@@ -52,8 +51,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, orderedTaskIds: [] });
   }
 
+  // The server's clock (UTC on Vercel) can be a day off from the user's local
+  // calendar day, so "today" must come from the client — never computed here.
+  const today = typeof body?.today === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.today)
+    ? body.today
+    : null;
+
+  if (!today) {
+    return NextResponse.json(
+      { ok: false, error: "Не вказано поточну дату" },
+      { status: 400 },
+    );
+  }
+
   const availableMinutes = Math.max(minutesBetween(dayStart, dayEnd), 0);
-  const today = todayString();
 
   const taskLines = tasks
     .map(
