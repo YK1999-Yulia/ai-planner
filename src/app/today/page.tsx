@@ -56,6 +56,7 @@ export default function TodayPage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [overdueExpanded, setOverdueExpanded] = useState(true);
+  const [confirmingBulkMove, setConfirmingBulkMove] = useState(false);
   const pendingDelete = useSyncExternalStore(
     subscribeDelete,
     getPendingDelete,
@@ -89,17 +90,13 @@ export default function TodayPage() {
     for (const task of overdueTasks) {
       update(task.id, { scheduledDate: today });
     }
+    setConfirmingBulkMove(false);
   }
 
   async function generatePlan() {
     vibrate(10);
     const today = todayString();
-    const todayAll = allTasks.filter((t) => t.scheduledDate === today && !isArchived(t));
-    const overdueUndone = allTasks.filter(
-      (t) => t.scheduledDate !== null && t.scheduledDate < today && t.completedAt === null,
-    );
-    const candidates = [...overdueUndone, ...todayAll];
-    const overdueIds = new Set(overdueUndone.map((t) => t.id));
+    const candidates = allTasks.filter((t) => t.scheduledDate === today && !isArchived(t));
 
     if (candidates.length === 0) {
       setError("На сьогодні ще немає запланованих задач.");
@@ -119,7 +116,6 @@ export default function TodayPage() {
             priority: t.priority,
             estimatedMinutes: t.estimatedMinutes,
             deadline: t.deadline,
-            overdue: overdueIds.has(t.id),
           })),
           dayStart: settings.dayStart,
           dayEnd: settings.dayEnd,
@@ -134,10 +130,7 @@ export default function TodayPage() {
       }
 
       (data.orderedTaskIds as string[]).forEach((id, index) => {
-        updateTaskById(id, {
-          position: index,
-          ...(overdueIds.has(id) ? { scheduledDate: today } : {}),
-        });
+        updateTaskById(id, { position: index });
       });
 
       markPlanGenerated(today, data.orderedTaskIds as string[]);
@@ -220,12 +213,32 @@ export default function TodayPage() {
           <span>Прострочене ({overdueTasks.length})</span>
           <span className={overdueExpanded ? "rotate-180" : ""}>⌄</span>
         </button>
-        <button
-          onClick={moveAllOverdueToToday}
-          className={`shrink-0 rounded-full bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 ${TAP_ACTIVE}`}
-        >
-          Все на сьогодні
-        </button>
+        {confirmingBulkMove ? (
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="text-xs text-red-300">
+              Перенести {overdueTasks.length} {pluralTasks(overdueTasks.length)}?
+            </span>
+            <button
+              onClick={moveAllOverdueToToday}
+              className={`rounded-full bg-red-500/30 px-3 py-1.5 text-xs font-semibold text-red-200 ${TAP_ACTIVE}`}
+            >
+              Так
+            </button>
+            <button
+              onClick={() => setConfirmingBulkMove(false)}
+              className={`rounded-full px-2 py-1.5 text-xs font-medium text-neutral-400 ${TAP_ACTIVE}`}
+            >
+              Скасувати
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmingBulkMove(true)}
+            className={`shrink-0 rounded-full bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 ${TAP_ACTIVE}`}
+          >
+            Перенести все на сьогодні
+          </button>
+        )}
       </div>
       {overdueExpanded && (
         <div className="mt-3 flex flex-col gap-4 animate-[fadeInUp_0.2s_ease-out_backwards]">
