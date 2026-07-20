@@ -64,6 +64,7 @@ export default function TodayPage() {
   const [error, setError] = useState<string | null>(null);
   const [overdueExpanded, setOverdueExpanded] = useState(true);
   const [confirmingBulkMove, setConfirmingBulkMove] = useState(false);
+  const [showPlanReadyToast, setShowPlanReadyToast] = useState(false);
   const pendingDelete = useSyncExternalStore(
     subscribeDelete,
     getPendingDelete,
@@ -151,6 +152,8 @@ export default function TodayPage() {
       });
 
       markPlanGenerated(today, data.orderedTaskIds as string[]);
+      setShowPlanReadyToast(true);
+      setTimeout(() => setShowPlanReadyToast(false), 3000);
     } catch (err) {
       console.error(err);
       setError(AI_ERROR_MESSAGE);
@@ -439,6 +442,12 @@ export default function TodayPage() {
           >
             Повернути
           </button>
+        </div>
+      )}
+
+      {showPlanReadyToast && (
+        <div className="fixed inset-x-4 bottom-20 z-20 rounded-2xl bg-card px-4 py-3 text-center text-sm font-medium text-white shadow-lg animate-[fadeInUp_0.2s_ease-out]">
+          План готовий. Гарного дня! ✨
         </div>
       )}
     </main>

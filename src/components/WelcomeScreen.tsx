@@ -42,11 +42,11 @@ export function WelcomeScreen({ onFinish }: { onFinish: () => void }) {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
       <h1 className="mb-4 font-[family-name:var(--font-heading)] text-3xl font-extrabold tracking-tight text-white">
-        AI Планер
+        Привіт! Я — Лад 👋
       </h1>
       <p className="mb-8 text-lg text-neutral-400">
-        Поділись усім, що тримаєш у голові — я перетворю це на чіткий план
-        твого дня.
+        Твій AI-планер. Поділись усім, що тримаєш у голові — я наведу лад:
+        розберу на задачі і складу план дня
       </p>
       <button
         onClick={() => {
@@ -55,7 +55,7 @@ export function WelcomeScreen({ onFinish }: { onFinish: () => void }) {
         }}
         className={`w-full max-w-xs rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground ${TAP_ACTIVE}`}
       >
-        Почати
+        Навести лад
       </button>
     </main>
   );

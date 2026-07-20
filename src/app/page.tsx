@@ -143,7 +143,7 @@ export default function CapturePage() {
     return (
       <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
         <h1 className="mb-1 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
-          Перевір задачі
+          Ось що я почув. Все вірно?
         </h1>
         <p className="mb-4 text-sm text-neutral-400">
           Виправ, що потрібно, або видали зайве, а потім збережи.
@@ -244,6 +244,9 @@ export default function CapturePage() {
 
   return (
     <main className="flex min-h-[calc(100dvh-4rem)] flex-col px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
+      <p className="mb-2 font-[family-name:var(--font-heading)] text-sm font-extrabold text-white">
+        Лад<span className="text-accent">·</span>
+      </p>
       <div className="mb-1 flex items-center justify-between">
         <p className="text-lg font-medium text-neutral-300">{getGreeting(userName)}</p>
         <Link
@@ -277,7 +280,7 @@ export default function CapturePage() {
           disabled={!text.trim() || loading}
           className={`w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
         >
-          {loading ? "Розбираю..." : "Розібрати"}
+          {loading ? "Розбираю твій потік думок… 🧠" : "Розібрати"}
         </button>
         {!text.trim() && (
           <button

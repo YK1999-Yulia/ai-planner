@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/BottomNav";
@@ -20,8 +20,15 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "AI Планер",
-  description: "Скоро тут буде план твого дня",
+  title: "Лад — AI-планер дня",
+  description: "Поділись думками — Лад розбере їх на задачі і складе план дня",
+  appleWebApp: {
+    title: "Лад",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1b1b1b",
 };
 
 export default function RootLayout({
