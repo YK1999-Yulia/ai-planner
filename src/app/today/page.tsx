@@ -54,6 +54,7 @@ export default function TodayPage() {
   const [settings] = useState<DaySettings>(() => loadSettings());
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [overdueExpanded, setOverdueExpanded] = useState(true);
   const pendingDelete = useSyncExternalStore(
     subscribeDelete,
     getPendingDelete,
@@ -80,6 +81,13 @@ export default function TodayPage() {
 
   function undoDelete() {
     undoPendingDelete();
+  }
+
+  function moveAllOverdueToToday() {
+    vibrate(10);
+    for (const task of overdueTasks) {
+      update(task.id, { scheduledDate: today });
+    }
   }
 
   async function generatePlan() {
@@ -201,24 +209,39 @@ export default function TodayPage() {
         : `${activeTodayCount} ${pluralTasks(activeTodayCount)} на сьогодні · ${formatHoursApprox(activeTodayMinutes)}`;
 
   const overdueSection = overdueTasks.length > 0 && (
-    <div className="mb-6">
-      <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-red-400">
-        Прострочене
-      </h2>
-      <div className="flex flex-col gap-4">
-        {overdueTasks.map((task, index) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            index={index}
-            overdueLabel={formatDaysUntil(task.scheduledDate as string).label}
-            onToggleDone={toggleDone}
-            onDelete={remove}
-            onUpdate={update}
-            onScheduleToday={() => update(task.id, { scheduledDate: today })}
-          />
-        ))}
+    <div className="mb-6 rounded-2xl bg-red-500/10 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <button
+          onClick={() => setOverdueExpanded((v) => !v)}
+          className={`flex items-center gap-1.5 font-[family-name:var(--font-heading)] text-lg font-bold text-red-400 ${TAP_ACTIVE}`}
+        >
+          <span aria-hidden>⚠️</span>
+          <span>Прострочене ({overdueTasks.length})</span>
+          <span className={overdueExpanded ? "rotate-180" : ""}>⌄</span>
+        </button>
+        <button
+          onClick={moveAllOverdueToToday}
+          className={`shrink-0 rounded-full bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 ${TAP_ACTIVE}`}
+        >
+          Все на сьогодні
+        </button>
       </div>
+      {overdueExpanded && (
+        <div className="mt-3 flex flex-col gap-4 animate-[fadeInUp_0.2s_ease-out_backwards]">
+          {overdueTasks.map((task, index) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              index={index}
+              overdueLabel={formatDaysUntil(task.scheduledDate as string).label}
+              onToggleDone={toggleDone}
+              onDelete={remove}
+              onUpdate={update}
+              onScheduleToday={() => update(task.id, { scheduledDate: today })}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 
