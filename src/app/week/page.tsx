@@ -88,6 +88,7 @@ export default function WeekPage() {
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewRow[] | null>(null);
   const [showTip, setShowTip] = useState(() => !hasSeenTip("week"));
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const pendingDelete = useSyncExternalStore(
     subscribeDelete,
     getPendingDelete,
@@ -177,7 +178,7 @@ export default function WeekPage() {
         return;
       }
       if (data.assignments.length === 0) {
-        setError("AI не зміг розподілити задачі. Спробуй пізніше.");
+        setError("Не вдалося розподілити задачі. Спробуй пізніше.");
         return;
       }
 
@@ -211,17 +212,22 @@ export default function WeekPage() {
       updateTaskById(row.id, { scheduledDate: row.scheduledDate });
     }
     setPreview(null);
+    setShowSuccessToast(true);
+    setTimeout(() => setShowSuccessToast(false), 3000);
   }
 
   const dates = weekDates(weekOffset);
   const today = todayString();
   const visibleTasks = allTasks.filter((t) => !pendingDeleteIds.includes(t.id));
+  const unscheduledCount = visibleTasks.filter(
+    (t) => t.scheduledDate === null && t.completedAt === null,
+  ).length;
 
   if (preview) {
     return (
       <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
         <h1 className="mb-1 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
-          Перевір розподіл
+          Ось як я розклав тиждень. Підходить?
         </h1>
         <p className="mb-4 text-sm text-neutral-400">
           Зміни день, де треба, а потім застосуй.
@@ -291,18 +297,30 @@ export default function WeekPage() {
 
       {showTip && (
         <TipBanner
-          text="Тут твій тиждень: тапни день, щоб побачити задачі, або натисни «Розподілити тиждень» — я сам розкладу все з Вхідних 👆"
+          text="Тут твій тиждень: тапни день, щоб побачити задачі, або натисни «Розкласти по днях» — я сам розкладу все з Вхідних 👆"
           onDismiss={dismissTip}
         />
       )}
 
       <button
         onClick={distributeWeek}
-        disabled={distributing}
-        className={`mb-4 w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
+        disabled={distributing || unscheduledCount === 0}
+        className={`mb-1 w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
       >
-        {distributing ? "Розподіляю..." : "Розподілити тиждень AI"}
+        {distributing ? (
+          <span className="flex items-center justify-center gap-2">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground" />
+            Розкладаю...
+          </span>
+        ) : unscheduledCount === 0 ? (
+          "Всі задачі вже розкладені ✓"
+        ) : (
+          `Розкласти по днях (${unscheduledCount})`
+        )}
       </button>
+      <p className="mb-4 text-xs text-neutral-500">
+        Розкидаю незаплановані задачі по днях тижня — з огляду на дедлайни і пріоритети
+      </p>
 
       {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
 
@@ -458,6 +476,12 @@ export default function WeekPage() {
           >
             Повернути
           </button>
+        </div>
+      )}
+
+      {showSuccessToast && (
+        <div className="fixed inset-x-4 bottom-20 z-20 rounded-2xl bg-card px-4 py-3 text-center text-sm font-medium text-white shadow-lg animate-[fadeInUp_0.2s_ease-out]">
+          Готово! Задачі розкладені по днях
         </div>
       )}
     </main>
