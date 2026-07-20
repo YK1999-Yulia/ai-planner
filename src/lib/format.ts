@@ -43,6 +43,15 @@ export function pluralTasks(n: number): string {
   return "задач";
 }
 
+/** "1 прострочена задача" / "3 прострочені задачі" / "5 прострочених задач" */
+export function formatOverdueCount(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return `${n} прострочена задача`;
+  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return `${n} прострочені задачі`;
+  return `${n} прострочених задач`;
+}
+
 /**
  * Human duration label used everywhere a task/plan duration is shown:
  * "30 хв", "1.5 год", "2 год", "6 год" — never raw minutes like "90 хв".

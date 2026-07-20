@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
   subscribeTasks,
@@ -33,7 +33,7 @@ import {
 import { TaskCard } from "@/components/TaskCard";
 import { EmptyState } from "@/components/EmptyState";
 import { todayString, addDays } from "@/lib/date";
-import { formatDaysUntil, pluralTasks, formatDuration } from "@/lib/format";
+import { formatDaysUntil, pluralTasks, formatDuration, formatOverdueCount } from "@/lib/format";
 import { isArchived } from "@/lib/archive";
 import { vibrate } from "@/lib/haptics";
 import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
@@ -65,6 +65,7 @@ export default function TodayPage() {
   const [overdueExpanded, setOverdueExpanded] = useState(true);
   const [confirmingBulkMove, setConfirmingBulkMove] = useState(false);
   const [showPlanReadyToast, setShowPlanReadyToast] = useState(false);
+  const overdueSectionRef = useRef<HTMLDivElement>(null);
   const pendingDelete = useSyncExternalStore(
     subscribeDelete,
     getPendingDelete,
@@ -101,6 +102,10 @@ export default function TodayPage() {
 
   function undoDelete() {
     undoPendingDelete();
+  }
+
+  function scrollToOverdue() {
+    overdueSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function moveAllOverdueToToday() {
@@ -212,7 +217,7 @@ export default function TodayPage() {
   const inboxHasTasks = allTasks.some(
     (t) => t.scheduledDate === null && t.completedAt === null,
   );
-  const showSectionLabels = overdueTasks.length > 0 || horizonTasks.length > 0;
+  const hasProposals = overdueTasks.length > 0 || horizonTasks.length > 0;
 
   const activeTodayCount = todayTasks.filter((t) => t.completedAt === null).length;
   const activeTodayMinutes = todayTasks
@@ -226,7 +231,7 @@ export default function TodayPage() {
         : `${activeTodayCount} ${pluralTasks(activeTodayCount)} на сьогодні · ${formatDuration(activeTodayMinutes)}`;
 
   const overdueSection = overdueTasks.length > 0 && (
-    <div className="mb-6 rounded-2xl bg-red-500/10 p-4">
+    <div ref={overdueSectionRef} className="mt-6 rounded-2xl bg-red-500/10 p-4">
       <div className="flex items-center justify-between gap-2">
         <button
           onClick={() => setOverdueExpanded((v) => !v)}
@@ -282,10 +287,12 @@ export default function TodayPage() {
     </div>
   );
 
+  const horizonHeading = allDone ? "Можна зробити заздалегідь" : "На горизонті";
+
   const horizonSection = horizonTasks.length > 0 && (
     <div className="mt-6">
       <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-neutral-300">
-        На горизонті
+        {horizonHeading}
       </h2>
       <div className="flex flex-col gap-3">
         {horizonTasks.map((task, index) => (
@@ -333,16 +340,34 @@ export default function TodayPage() {
           <p className="mb-2 text-xl font-semibold text-white">
             На сьогодні все виконано! 🎉
           </p>
-          <p className="mb-6 text-neutral-400">
+          <p className={hasProposals ? "text-neutral-400" : "mb-6 text-neutral-400"}>
             Ти молодець. Відпочинь або заплануй щось на завтра
           </p>
-          <Link
-            href="/week"
-            className={`rounded-full bg-neutral-800 px-6 py-3 text-base text-neutral-300 ${TAP_ACTIVE}`}
-          >
-            Заглянути у Тиждень
-          </Link>
+          {!hasProposals && (
+            <Link
+              href="/week"
+              className={`rounded-full bg-neutral-800 px-6 py-3 text-base text-neutral-300 ${TAP_ACTIVE}`}
+            >
+              Заглянути у Тиждень
+            </Link>
+          )}
         </div>
+
+        {hasProposals && (
+          <>
+            <p className="mb-4 text-sm text-neutral-400">
+              Є час і настрій? Можна взяти щось наперед або закрити борги:
+            </p>
+            {horizonSection}
+            {overdueSection}
+            <Link
+              href="/week"
+              className={`mt-6 block rounded-full bg-neutral-800 px-6 py-3 text-center text-base text-neutral-300 ${TAP_ACTIVE}`}
+            >
+              Заглянути у Тиждень
+            </Link>
+          </>
+        )}
       </>
     );
   } else {
@@ -417,19 +442,22 @@ export default function TodayPage() {
       <h1 className="font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
         Сьогодні
       </h1>
-      {todaySubtitle && <p className="mb-4 text-sm text-neutral-400">{todaySubtitle}</p>}
-      {!todaySubtitle && <div className="mb-4" />}
+      {todaySubtitle && <p className="mb-2 text-sm text-neutral-400">{todaySubtitle}</p>}
+      {!todaySubtitle && <div className="mb-2" />}
 
-      {overdueSection}
-
-      {showSectionLabels && (
-        <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-white">
-          Сьогодні
-        </h2>
+      {overdueTasks.length > 0 && (
+        <button
+          onClick={scrollToOverdue}
+          className={`mb-4 inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-3 py-1.5 text-xs font-semibold text-red-300 ${TAP_ACTIVE}`}
+        >
+          <span aria-hidden>⚠️</span>
+          <span>{formatOverdueCount(overdueTasks.length)}</span>
+        </button>
       )}
 
       {todayContent}
-      {horizonSection}
+      {!allDone && horizonSection}
+      {!allDone && overdueSection}
 
       {pendingDelete && (
         <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-lg">
