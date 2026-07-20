@@ -17,6 +17,13 @@ import {
   scheduleDelete,
   undoPendingDelete,
 } from "@/lib/delete-store";
+import {
+  subscribeArchiveTransition,
+  getArchiveTransitionIds,
+  getArchiveTransitionIdsServerSnapshot,
+  markJustCompleted,
+  clearJustCompleted,
+} from "@/lib/archive-transition-store";
 import { hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import { TaskCard } from "@/components/TaskCard";
 import { TipBanner } from "@/components/TipBanner";
@@ -81,11 +88,23 @@ export default function InboxPage() {
     getPendingDeleteIds,
     getPendingDeleteIdsServerSnapshot,
   );
+  const archiveTransitionIds = useSyncExternalStore(
+    subscribeArchiveTransition,
+    getArchiveTransitionIds,
+    getArchiveTransitionIdsServerSnapshot,
+  );
 
-  const tasks = allTasks.filter((t) => t.scheduledDate === null && !isArchived(t));
+  const tasks = allTasks.filter(
+    (t) => t.scheduledDate === null && (!isArchived(t) || archiveTransitionIds.includes(t.id)),
+  );
 
   function toggleDone(task: Task) {
     const done = task.completedAt !== null;
+    if (done) {
+      clearJustCompleted(task.id);
+    } else {
+      markJustCompleted(task.id);
+    }
     updateTaskById(task.id, { completedAt: done ? null : new Date().toISOString() });
   }
 

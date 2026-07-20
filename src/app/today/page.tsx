@@ -23,6 +23,13 @@ import {
   scheduleDelete,
   undoPendingDelete,
 } from "@/lib/delete-store";
+import {
+  subscribeArchiveTransition,
+  getArchiveTransitionIds,
+  getArchiveTransitionIdsServerSnapshot,
+  markJustCompleted,
+  clearJustCompleted,
+} from "@/lib/archive-transition-store";
 import { TaskCard } from "@/components/TaskCard";
 import { EmptyState } from "@/components/EmptyState";
 import { todayString, addDays } from "@/lib/date";
@@ -67,9 +74,19 @@ export default function TodayPage() {
     getPendingDeleteIds,
     getPendingDeleteIdsServerSnapshot,
   );
+  const archiveTransitionIds = useSyncExternalStore(
+    subscribeArchiveTransition,
+    getArchiveTransitionIds,
+    getArchiveTransitionIdsServerSnapshot,
+  );
 
   function toggleDone(task: Task) {
     const done = task.completedAt !== null;
+    if (done) {
+      clearJustCompleted(task.id);
+    } else {
+      markJustCompleted(task.id);
+    }
     updateTaskById(task.id, { completedAt: done ? null : new Date().toISOString() });
   }
 
@@ -146,8 +163,12 @@ export default function TodayPage() {
   const horizonLimit = addDays(today, HORIZON_DAYS);
   const visibleTasks = allTasks.filter((t) => !pendingDeleteIds.includes(t.id));
 
-  const todayTasks = visibleTasks
-    .filter((t) => t.scheduledDate === today && !isArchived(t))
+  const todayAllForCount = visibleTasks.filter((t) => t.scheduledDate === today);
+  const totalTodayCount = todayAllForCount.length;
+  const doneCount = todayAllForCount.filter((t) => t.completedAt !== null).length;
+
+  const todayTasks = todayAllForCount
+    .filter((t) => !isArchived(t) || archiveTransitionIds.includes(t.id))
     .sort((a, b) => a.position - b.position);
 
   const overdueTasks = visibleTasks
@@ -174,13 +195,12 @@ export default function TodayPage() {
   });
 
   const overflow = cursor > settings.dayEnd;
-  const doneCount = todayTasks.filter((t) => t.completedAt !== null).length;
   const progressPercent =
-    todayTasks.length > 0 ? Math.round((doneCount / todayTasks.length) * 100) : 0;
-  const allDone = todayTasks.length > 0 && doneCount === todayTasks.length;
+    totalTodayCount > 0 ? Math.round((doneCount / totalTodayCount) * 100) : 0;
+  const allDone = totalTodayCount > 0 && doneCount === totalTodayCount;
   const planGenerated = hasGeneratedPlan(today);
   const planTaskIds = getGeneratedPlanTaskIds(today);
-  const currentTodayIds = todayTasks.map((t) => t.id).sort();
+  const currentTodayIds = todayAllForCount.map((t) => t.id).sort();
   const planIsStale =
     planGenerated &&
     planTaskIds !== null &&
@@ -196,7 +216,7 @@ export default function TodayPage() {
     .filter((t) => t.completedAt === null)
     .reduce((sum, t) => sum + (t.estimatedMinutes && t.estimatedMinutes > 0 ? t.estimatedMinutes : 30), 0);
   const todaySubtitle =
-    todayTasks.length === 0
+    totalTodayCount === 0
       ? null
       : allDone
         ? "Все зроблено. Ти молодець ✨"
@@ -283,7 +303,7 @@ export default function TodayPage() {
 
   let todayContent: React.ReactNode;
 
-  if (todayTasks.length === 0) {
+  if (totalTodayCount === 0) {
     todayContent = (
       <EmptyState
         icon="☀️"
@@ -299,7 +319,7 @@ export default function TodayPage() {
       <>
         <div className="mb-4">
           <p className="mb-2 text-sm text-neutral-300">
-            {doneCount} з {todayTasks.length} виконано
+            {doneCount} з {totalTodayCount} виконано
           </p>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
             <div className="h-full w-full rounded-full bg-accent transition-all duration-300" />
@@ -327,7 +347,7 @@ export default function TodayPage() {
       <>
         <div className="mb-4">
           <p className="mb-2 text-sm text-neutral-300">
-            {doneCount} з {todayTasks.length} виконано
+            {doneCount} з {totalTodayCount} виконано
           </p>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
             <div

@@ -6,10 +6,9 @@ export function completedDateString(task: Task): string | null {
   return toDateString(new Date(task.completedAt));
 }
 
-/** A task is archived once it was completed on a day before today. */
+/** A task is archived as soon as it's marked done. */
 export function isArchived(task: Task): boolean {
-  const date = completedDateString(task);
-  return date !== null && date !== todayString();
+  return task.completedAt !== null;
 }
 
 export function formatArchiveGroupLabel(dateStr: string): string {

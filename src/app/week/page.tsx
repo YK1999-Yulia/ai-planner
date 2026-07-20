@@ -17,6 +17,13 @@ import {
   scheduleDelete,
   undoPendingDelete,
 } from "@/lib/delete-store";
+import {
+  subscribeArchiveTransition,
+  getArchiveTransitionIds,
+  getArchiveTransitionIdsServerSnapshot,
+  markJustCompleted,
+  clearJustCompleted,
+} from "@/lib/archive-transition-store";
 import { hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import { TaskCard } from "@/components/TaskCard";
 import { DaySelect } from "@/components/DaySelect";
@@ -106,9 +113,19 @@ export default function WeekPage() {
     getPendingDeleteIds,
     getPendingDeleteIdsServerSnapshot,
   );
+  const archiveTransitionIds = useSyncExternalStore(
+    subscribeArchiveTransition,
+    getArchiveTransitionIds,
+    getArchiveTransitionIdsServerSnapshot,
+  );
 
   function toggleDone(task: Task) {
     const done = task.completedAt !== null;
+    if (done) {
+      clearJustCompleted(task.id);
+    } else {
+      markJustCompleted(task.id);
+    }
     updateTaskById(task.id, { completedAt: done ? null : new Date().toISOString() });
   }
 
@@ -280,11 +297,12 @@ export default function WeekPage() {
     (t) => t.scheduledDate === null && t.completedAt === null,
   ).length;
   const weekKey = dates[0];
+  const isVisible = (t: Task) => !isArchived(t) || archiveTransitionIds.includes(t.id);
   const weekSummaryTasks = visibleTasks.filter(
     (t) =>
       t.scheduledDate !== null &&
       dates.includes(t.scheduledDate) &&
-      !isArchived(t) &&
+      isVisible(t) &&
       !t.isExample,
   );
   const storedSummary = getWeekSummary(weekKey);
@@ -336,7 +354,7 @@ export default function WeekPage() {
   }
 
   const todayTasks = sortByPriority(
-    visibleTasks.filter((t) => t.scheduledDate === today && !isArchived(t)),
+    visibleTasks.filter((t) => t.scheduledDate === today && isVisible(t)),
   );
 
   const weekListTasks = sortByDay(
@@ -345,13 +363,13 @@ export default function WeekPage() {
         t.scheduledDate !== null &&
         t.scheduledDate !== today &&
         dates.includes(t.scheduledDate) &&
-        !isArchived(t),
+        isVisible(t),
     ),
   );
 
   const selectedDayTasks = selectedDate
     ? sortByPriority(
-        visibleTasks.filter((t) => t.scheduledDate === selectedDate && !isArchived(t)),
+        visibleTasks.filter((t) => t.scheduledDate === selectedDate && isVisible(t)),
       )
     : [];
 
