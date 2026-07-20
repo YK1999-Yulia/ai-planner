@@ -45,6 +45,22 @@ function sortDone(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => (b.completedAt ?? "").localeCompare(a.completedAt ?? ""));
 }
 
+type InboxFilter = "all" | "high" | "medium" | "low" | "unscheduled";
+
+const FILTER_OPTIONS: { value: InboxFilter; label: string }[] = [
+  { value: "all", label: "Всі" },
+  { value: "high", label: "Високий" },
+  { value: "medium", label: "Середній" },
+  { value: "low", label: "Низький" },
+  { value: "unscheduled", label: "Без дня" },
+];
+
+function matchesFilter(task: Task, filter: InboxFilter): boolean {
+  if (filter === "all") return true;
+  if (filter === "unscheduled") return task.scheduledDate === null;
+  return task.priority === filter;
+}
+
 export default function InboxPage() {
   const allTasks = useSyncExternalStore(
     subscribeTasks,
@@ -53,6 +69,7 @@ export default function InboxPage() {
   );
   const [doneExpanded, setDoneExpanded] = useState(false);
   const [showTip, setShowTip] = useState(() => !hasSeenTip("inbox"));
+  const [filter, setFilter] = useState<InboxFilter>("all");
   const pendingDelete = useSyncExternalStore(
     subscribeDelete,
     getPendingDelete,
@@ -112,8 +129,10 @@ export default function InboxPage() {
   }
 
   const visibleTasks = tasks.filter((t) => !pendingDeleteIds.includes(t.id));
-  const active = sortActive(visibleTasks.filter((t) => t.completedAt === null));
-  const done = sortDone(visibleTasks.filter((t) => t.completedAt !== null));
+  const filteredTasks = visibleTasks.filter((t) => matchesFilter(t, filter));
+  const active = sortActive(filteredTasks.filter((t) => t.completedAt === null));
+  const done = sortDone(filteredTasks.filter((t) => t.completedAt !== null));
+  const filterEmptyState = filter !== "all" && filteredTasks.length === 0;
 
   return (
     <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
@@ -126,6 +145,22 @@ export default function InboxPage() {
         </Link>
       </div>
 
+      <div className="mb-4 flex flex-wrap gap-2">
+        {FILTER_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => setFilter(opt.value)}
+            className={`rounded-full px-3 py-1.5 text-xs font-medium ${TAP_ACTIVE} ${
+              filter === opt.value
+                ? "bg-accent text-accent-foreground"
+                : "bg-neutral-800 text-neutral-400"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {showTip && (
         <TipBanner
           text="Це твої Вхідні — всі задачі тут. Тапни задачу, щоб змінити день чи пріоритет. Готове відмічай галочкою 👌"
@@ -133,43 +168,57 @@ export default function InboxPage() {
         />
       )}
 
-      <div className="flex flex-col gap-4">
-        {active.map((task, index) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            index={index}
-            onToggleDone={toggleDone}
-            onDelete={remove}
-            onUpdate={update}
-          />
-        ))}
-      </div>
-
-      {done.length > 0 && (
-        <div className="mt-6">
+      {filterEmptyState ? (
+        <div className="py-10 text-center">
+          <p className="mb-3 text-neutral-400">Нічого не знайшлось.</p>
           <button
-            onClick={() => setDoneExpanded((v) => !v)}
-            className={`flex w-full items-center justify-between rounded-xl px-1 py-2 text-sm font-medium text-neutral-400 ${TAP_ACTIVE}`}
+            onClick={() => setFilter("all")}
+            className={`text-sm font-semibold text-accent underline ${TAP_ACTIVE}`}
           >
-            <span>Виконано ({done.length})</span>
-            <span className={doneExpanded ? "rotate-180" : ""}>⌄</span>
+            Зняти фільтр?
           </button>
-          {doneExpanded && (
-            <div className="mt-2 flex flex-col gap-4 animate-[fadeInUp_0.2s_ease-out_backwards]">
-              {done.map((task, index) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  index={index}
-                  onToggleDone={toggleDone}
-                  onDelete={remove}
-                  onUpdate={update}
-                />
-              ))}
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-col gap-4">
+            {active.map((task, index) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                index={index}
+                onToggleDone={toggleDone}
+                onDelete={remove}
+                onUpdate={update}
+              />
+            ))}
+          </div>
+
+          {done.length > 0 && (
+            <div className="mt-6">
+              <button
+                onClick={() => setDoneExpanded((v) => !v)}
+                className={`flex w-full items-center justify-between rounded-xl px-1 py-2 text-sm font-medium text-neutral-400 ${TAP_ACTIVE}`}
+              >
+                <span>Виконано ({done.length})</span>
+                <span className={doneExpanded ? "rotate-180" : ""}>⌄</span>
+              </button>
+              {doneExpanded && (
+                <div className="mt-2 flex flex-col gap-4 animate-[fadeInUp_0.2s_ease-out_backwards]">
+                  {done.map((task, index) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      index={index}
+                      onToggleDone={toggleDone}
+                      onDelete={remove}
+                      onUpdate={update}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </>
       )}
 
       {pendingDelete && (
