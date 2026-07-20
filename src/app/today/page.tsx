@@ -24,6 +24,7 @@ import {
   undoPendingDelete,
 } from "@/lib/delete-store";
 import { TaskCard } from "@/components/TaskCard";
+import { EmptyState } from "@/components/EmptyState";
 import { todayString, addDays } from "@/lib/date";
 import { formatDaysUntil, pluralTasks, formatDuration } from "@/lib/format";
 import { isArchived } from "@/lib/archive";
@@ -271,23 +272,14 @@ export default function TodayPage() {
 
   if (todayTasks.length === 0) {
     todayContent = (
-      <div className="flex flex-col items-center py-10 text-center">
-        <p className="mb-6 text-lg text-neutral-300">На сьогодні задач поки немає</p>
-        <Link
-          href="/"
-          className={`mb-3 w-full max-w-xs rounded-full bg-accent py-4 text-base font-semibold text-accent-foreground ${TAP_ACTIVE}`}
-        >
-          Записати першу задачу на сьогодні
-        </Link>
-        {inboxHasTasks && (
-          <Link
-            href="/inbox"
-            className={`w-full max-w-xs rounded-full bg-neutral-800 py-3 text-base text-neutral-300 ${TAP_ACTIVE}`}
-          >
-            Взяти з Вхідних
-          </Link>
-        )}
-      </div>
+      <EmptyState
+        icon="☀️"
+        text="На сьогодні задач поки немає"
+        actionLabel="Записати першу задачу на сьогодні"
+        actionHref="/"
+        secondaryLabel={inboxHasTasks ? "Взяти з Вхідних" : undefined}
+        secondaryHref={inboxHasTasks ? "/inbox" : undefined}
+      />
     );
   } else if (allDone) {
     todayContent = (

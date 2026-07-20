@@ -18,6 +18,7 @@ import {
   undoPendingDelete,
 } from "@/lib/delete-store";
 import { isArchived, completedDateString, formatArchiveGroupLabel } from "@/lib/archive";
+import { EmptyState } from "@/components/EmptyState";
 import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
 import type { Task } from "@/lib/types";
 
@@ -120,9 +121,7 @@ export default function ArchivePage() {
       </div>
 
       {archived.length === 0 ? (
-        <p className="py-10 text-center text-neutral-400">
-          Тут з&apos;являться виконані задачі. Перша ще попереду 💪
-        </p>
+        <EmptyState icon="🗄️" text="Тут з'являться виконані задачі. Перша ще попереду 💪" />
       ) : (
         <div className="flex flex-col gap-6">
           {sortedDates.map((date) => (

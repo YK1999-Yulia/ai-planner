@@ -20,6 +20,7 @@ import {
 import { hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import { TaskCard } from "@/components/TaskCard";
 import { TipBanner } from "@/components/TipBanner";
+import { EmptyState } from "@/components/EmptyState";
 import { isArchived } from "@/lib/archive";
 import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
 import type { Priority, Task } from "@/lib/types";
@@ -105,29 +106,6 @@ export default function InboxPage() {
     setShowTip(false);
   }
 
-  if (tasks.length === 0) {
-    return (
-      <main className="flex min-h-dvh flex-col items-center justify-center px-6 pb-8 text-center animate-[pageFade_0.15s_ease-out]">
-        <h1 className="mb-2 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
-          Тут порожньо
-        </h1>
-        <p className="mb-6 text-neutral-400">
-          Занотуй перші думки на вкладці &laquo;Занотувати&raquo; — і задачі
-          з&apos;являться тут.
-        </p>
-        <Link
-          href="/"
-          className={`mb-3 rounded-full bg-accent px-6 py-3 text-base font-semibold text-accent-foreground ${TAP_ACTIVE}`}
-        >
-          Занотувати
-        </Link>
-        <Link href="/archive" className={`text-sm text-neutral-500 underline ${TAP_ACTIVE}`}>
-          Архів
-        </Link>
-      </main>
-    );
-  }
-
   const visibleTasks = tasks.filter((t) => !pendingDeleteIds.includes(t.id));
   const filteredTasks = visibleTasks.filter((t) => matchesFilter(t, filter));
   const active = sortActive(filteredTasks.filter((t) => t.completedAt === null));
@@ -145,78 +123,89 @@ export default function InboxPage() {
         </Link>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {FILTER_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => setFilter(opt.value)}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium ${TAP_ACTIVE} ${
-              filter === opt.value
-                ? "bg-accent text-accent-foreground"
-                : "bg-neutral-800 text-neutral-400"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
-      {showTip && (
-        <TipBanner
-          text="Це твої Вхідні — всі задачі тут. Тапни задачу, щоб змінити день чи пріоритет. Готове відмічай галочкою 👌"
-          onDismiss={dismissTip}
+      {tasks.length === 0 ? (
+        <EmptyState
+          icon="📥"
+          text="Тут порожньо — занотуй перші думки, і задачі з'являться тут"
+          actionLabel="Занотувати"
+          actionHref="/"
         />
-      )}
-
-      {filterEmptyState ? (
-        <div className="py-10 text-center">
-          <p className="mb-3 text-neutral-400">Нічого не знайшлось.</p>
-          <button
-            onClick={() => setFilter("all")}
-            className={`text-sm font-semibold text-accent underline ${TAP_ACTIVE}`}
-          >
-            Зняти фільтр?
-          </button>
-        </div>
       ) : (
         <>
-          <div className="flex flex-col gap-4">
-            {active.map((task, index) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                index={index}
-                onToggleDone={toggleDone}
-                onDelete={remove}
-                onUpdate={update}
-              />
+          <div className="mb-4 flex flex-wrap gap-2">
+            {FILTER_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setFilter(opt.value)}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium ${TAP_ACTIVE} ${
+                  filter === opt.value
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-neutral-800 text-neutral-400"
+                }`}
+              >
+                {opt.label}
+              </button>
             ))}
           </div>
 
-          {done.length > 0 && (
-            <div className="mt-6">
+          {showTip && (
+            <TipBanner
+              text="Це твої Вхідні — всі задачі тут. Тапни задачу, щоб змінити день чи пріоритет. Готове відмічай галочкою 👌"
+              onDismiss={dismissTip}
+            />
+          )}
+
+          {filterEmptyState ? (
+            <div className="py-10 text-center">
+              <p className="mb-3 text-neutral-400">Нічого не знайшлось.</p>
               <button
-                onClick={() => setDoneExpanded((v) => !v)}
-                className={`flex w-full items-center justify-between rounded-xl px-1 py-2 text-sm font-medium text-neutral-400 ${TAP_ACTIVE}`}
+                onClick={() => setFilter("all")}
+                className={`text-sm font-semibold text-accent underline ${TAP_ACTIVE}`}
               >
-                <span>Виконано ({done.length})</span>
-                <span className={doneExpanded ? "rotate-180" : ""}>⌄</span>
+                Зняти фільтр?
               </button>
-              {doneExpanded && (
-                <div className="mt-2 flex flex-col gap-4 animate-[fadeInUp_0.2s_ease-out_backwards]">
-                  {done.map((task, index) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      index={index}
-                      onToggleDone={toggleDone}
-                      onDelete={remove}
-                      onUpdate={update}
-                    />
-                  ))}
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-col gap-4">
+                {active.map((task, index) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    index={index}
+                    onToggleDone={toggleDone}
+                    onDelete={remove}
+                    onUpdate={update}
+                  />
+                ))}
+              </div>
+
+              {done.length > 0 && (
+                <div className="mt-6">
+                  <button
+                    onClick={() => setDoneExpanded((v) => !v)}
+                    className={`flex w-full items-center justify-between rounded-xl px-1 py-2 text-sm font-medium text-neutral-400 ${TAP_ACTIVE}`}
+                  >
+                    <span>Виконано ({done.length})</span>
+                    <span className={doneExpanded ? "rotate-180" : ""}>⌄</span>
+                  </button>
+                  {doneExpanded && (
+                    <div className="mt-2 flex flex-col gap-4 animate-[fadeInUp_0.2s_ease-out_backwards]">
+                      {done.map((task, index) => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          index={index}
+                          onToggleDone={toggleDone}
+                          onDelete={remove}
+                          onUpdate={update}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
+            </>
           )}
         </>
       )}
