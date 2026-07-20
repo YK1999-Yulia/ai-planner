@@ -53,7 +53,7 @@ export function WelcomeScreen({ onFinish }: { onFinish: () => void }) {
           vibrate(10);
           setStep(2);
         }}
-        className={`w-full max-w-xs rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground ${TAP_ACTIVE}`}
+        className={`w-full max-w-xs rounded-full bg-accent py-4 text-lg font-bold text-accent-foreground ${TAP_ACTIVE}`}
       >
         Навести лад
       </button>

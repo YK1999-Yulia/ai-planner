@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSyncExternalStore } from "react";
 import { TAP_ACTIVE } from "@/lib/ui";
+import {
+  subscribeWelcome,
+  getShowWelcome,
+  getShowWelcomeServerSnapshot,
+} from "@/lib/welcome-store";
 
 const TABS = [
   { href: "/", label: "Занотувати" },
@@ -13,6 +19,15 @@ const TABS = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const showWelcome = useSyncExternalStore(
+    subscribeWelcome,
+    getShowWelcome,
+    getShowWelcomeServerSnapshot,
+  );
+
+  if (pathname === "/" && showWelcome) {
+    return null;
+  }
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-white/10 bg-surface pb-[env(safe-area-inset-bottom)]">

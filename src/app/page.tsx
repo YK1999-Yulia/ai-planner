@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { addTasks, getTasksSnapshot } from "@/lib/tasks-store";
+import { addTasks } from "@/lib/tasks-store";
 import { PRIORITY_LABELS } from "@/lib/priority";
-import { hasSeenWelcome, markWelcomeSeen, hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
+import { markWelcomeSeen, hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
+import {
+  subscribeWelcome,
+  getShowWelcome,
+  getShowWelcomeServerSnapshot,
+  dismissWelcome,
+} from "@/lib/welcome-store";
 import { getUserName } from "@/lib/profile-storage";
 import { getGreeting } from "@/lib/format";
 import { todayString } from "@/lib/date";
@@ -30,15 +36,16 @@ export default function CapturePage() {
   const [drafts, setDrafts] = useState<ParsedTaskDraft[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [welcomeSeen, setWelcomeSeen] = useState<boolean | null>(null);
   const [showPreviewTip, setShowPreviewTip] = useState(false);
   const [isExampleFlow, setIsExampleFlow] = useState(false);
   const [userName, setUserNameState] = useState("");
+  const showWelcome = useSyncExternalStore(
+    subscribeWelcome,
+    getShowWelcome,
+    getShowWelcomeServerSnapshot,
+  );
 
   useEffect(() => {
-    const forced = new URLSearchParams(window.location.search).get("welcome") === "1";
-    const isNewUser = !hasSeenWelcome() && getTasksSnapshot().length === 0;
-    setWelcomeSeen(!(forced || isNewUser));
     setUserNameState(getUserName());
   }, []);
 
@@ -123,17 +130,13 @@ export default function CapturePage() {
     router.push("/inbox");
   }
 
-  if (welcomeSeen === null) {
-    return null;
-  }
-
-  if (!welcomeSeen) {
+  if (showWelcome) {
     return (
       <WelcomeScreen
         onFinish={() => {
           markWelcomeSeen();
           setUserNameState(getUserName());
-          setWelcomeSeen(true);
+          dismissWelcome();
         }}
       />
     );
