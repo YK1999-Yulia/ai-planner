@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   subscribeTasks,
   getTasksSnapshot,
@@ -34,6 +35,8 @@ import { hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import { TaskCard } from "@/components/TaskCard";
 import { TipBanner } from "@/components/TipBanner";
 import { EmptyState } from "@/components/EmptyState";
+import { WeekBreakdownPreview } from "@/components/WeekBreakdownPreview";
+import { useDistributeWeek } from "@/hooks/useDistributeWeek";
 import { isArchived } from "@/lib/archive";
 import { pluralTasks } from "@/lib/format";
 import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
@@ -77,6 +80,7 @@ function matchesFilter(task: Task, filter: InboxFilter): boolean {
 }
 
 export default function InboxPage() {
+  const router = useRouter();
   const allTasks = useSyncExternalStore(
     subscribeTasks,
     getTasksSnapshot,
@@ -105,6 +109,9 @@ export default function InboxPage() {
     getJustSaved,
     getJustSavedServerSnapshot,
   );
+  const isVisible = (t: Task) => !isArchived(t) || archiveTransitionIds.includes(t.id);
+  const { distributing, error, preview, distributeWeek, updatePreviewRow, confirmPreview, cancelPreview } =
+    useDistributeWeek({ allTasks, weekOffset: 0, isVisible });
 
   useEffect(() => {
     if (justSaved === null) return;
@@ -141,6 +148,22 @@ export default function InboxPage() {
   function dismissTip() {
     markTipSeen("inbox");
     setShowTip(false);
+  }
+
+  function handleConfirmPreview() {
+    confirmPreview();
+    router.push("/week");
+  }
+
+  if (preview) {
+    return (
+      <WeekBreakdownPreview
+        rows={preview}
+        onChangeRow={updatePreviewRow}
+        onConfirm={handleConfirmPreview}
+        onCancel={cancelPreview}
+      />
+    );
   }
 
   const visibleTasks = tasks.filter((t) => !pendingDeleteIds.includes(t.id));
@@ -183,12 +206,14 @@ export default function InboxPage() {
                 У тебе {visibleTasks.length} {pluralTasks(visibleTasks.length)} без дня. Хочеш,
                 розкладу їх по тижню?
               </p>
-              <Link
-                href="/week"
-                className={`inline-block rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground ${TAP_ACTIVE}`}
+              <button
+                onClick={distributeWeek}
+                disabled={distributing}
+                className={`inline-block rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
               >
-                Розкласти по днях
-              </Link>
+                {distributing ? "Розкладаю..." : "Розкласти по днях"}
+              </button>
+              {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
             </div>
           )}
 
@@ -287,13 +312,16 @@ export default function InboxPage() {
       {justSaved !== null && (
         <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-lg animate-[fadeInUp_0.2s_ease-out]">
           <span className="text-sm font-medium text-white">Збережено! Розкласти по днях?</span>
-          <Link
-            href="/week"
-            onClick={clearJustSaved}
-            className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_TARGET_44} ${TAP_ACTIVE}`}
+          <button
+            onClick={() => {
+              clearJustSaved();
+              distributeWeek();
+            }}
+            disabled={distributing}
+            className={`ml-3 shrink-0 text-sm font-semibold text-accent disabled:opacity-40 ${TAP_TARGET_44} ${TAP_ACTIVE}`}
           >
-            Розкласти по днях
-          </Link>
+            {distributing ? "Розкладаю..." : "Розкласти по днях"}
+          </button>
         </div>
       )}
     </main>

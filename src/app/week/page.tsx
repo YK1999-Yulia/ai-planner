@@ -26,8 +26,9 @@ import {
 } from "@/lib/archive-transition-store";
 import { hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import { TaskCard } from "@/components/TaskCard";
-import { DaySelect } from "@/components/DaySelect";
 import { TipBanner } from "@/components/TipBanner";
+import { WeekBreakdownPreview } from "@/components/WeekBreakdownPreview";
+import { useDistributeWeek } from "@/hooks/useDistributeWeek";
 import {
   weekDates,
   todayString,
@@ -81,12 +82,6 @@ function formatDayPanelHeader(date: string, tasks: Task[]): string {
   return `${dayLabel} · ${tasks.length} ${pluralTasks(tasks.length)} · ${formatDuration(minutes)}`;
 }
 
-interface PreviewRow {
-  id: string;
-  title: string;
-  scheduledDate: string;
-}
-
 export default function WeekPage() {
   const allTasks = useSyncExternalStore(
     subscribeTasks,
@@ -95,12 +90,8 @@ export default function WeekPage() {
   );
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [distributing, setDistributing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<PreviewRow[] | null>(null);
   const [showTip, setShowTip] = useState(() => !hasSeenTip("week"));
   const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [pendingSummary, setPendingSummary] = useState<string | null>(null);
   const [summaryRefreshing, setSummaryRefreshing] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [showFullWeekList, setShowFullWeekList] = useState(false);
@@ -119,6 +110,16 @@ export default function WeekPage() {
     getArchiveTransitionIds,
     getArchiveTransitionIdsServerSnapshot,
   );
+  const isVisible = (t: Task) => !isArchived(t) || archiveTransitionIds.includes(t.id);
+  const {
+    distributing,
+    error,
+    preview,
+    distributeWeek,
+    updatePreviewRow,
+    confirmPreview,
+    cancelPreview,
+  } = useDistributeWeek({ allTasks, weekOffset, isVisible });
 
   function toggleDone(task: Task) {
     const done = task.completedAt !== null;
@@ -162,102 +163,8 @@ export default function WeekPage() {
     setShowTip(false);
   }
 
-  async function distributeWeek() {
-    vibrate(10);
-    const dates = weekDates(weekOffset);
-    const candidates = allTasks.filter(
-      (t) => t.scheduledDate === null && t.completedAt === null,
-    );
-
-    if (candidates.length === 0) {
-      setError("Немає незапланованих задач у Вхідних для розподілу.");
-      return;
-    }
-
-    const existingLoad = dates.map((date) => {
-      const dayTasks = allTasks.filter(
-        (t) => t.scheduledDate === date && t.completedAt === null,
-      );
-      return {
-        date,
-        taskCount: dayTasks.length,
-        minutes: dayTasks.reduce(
-          (sum, t) => sum + (t.estimatedMinutes && t.estimatedMinutes > 0 ? t.estimatedMinutes : 30),
-          0,
-        ),
-      };
-    });
-
-    setDistributing(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/plan-week", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tasks: candidates.map((t) => ({
-            id: t.id,
-            title: t.title,
-            priority: t.priority,
-            estimatedMinutes: t.estimatedMinutes,
-            deadline: t.deadline,
-          })),
-          weekDates: dates,
-          existingLoad,
-          today: todayString(),
-        }),
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        console.error(data.error);
-        setError(AI_ERROR_MESSAGE);
-        return;
-      }
-      if (data.assignments.length === 0) {
-        setError("Не вдалося розподілити задачі. Спробуй пізніше.");
-        return;
-      }
-
-      const rows: PreviewRow[] = (
-        data.assignments as { id: string; scheduledDate: string }[]
-      ).map((a) => {
-        const task = candidates.find((c) => c.id === a.id);
-        return { id: a.id, title: task?.title ?? "", scheduledDate: a.scheduledDate };
-      });
-      setPreview(rows);
-      setPendingSummary(typeof data.weekSummary === "string" ? data.weekSummary : null);
-    } catch (err) {
-      console.error(err);
-      setError(AI_ERROR_MESSAGE);
-    } finally {
-      setDistributing(false);
-    }
-  }
-
-  function updatePreviewRow(id: string, scheduledDate: string | null) {
-    setPreview((prev) =>
-      prev
-        ? prev.map((r) => (r.id === id ? { ...r, scheduledDate: scheduledDate ?? r.scheduledDate } : r))
-        : prev,
-    );
-  }
-
-  function confirmPreview() {
-    if (!preview) return;
-    vibrate(10);
-    for (const row of preview) {
-      updateTaskById(row.id, { scheduledDate: row.scheduledDate });
-    }
-    if (pendingSummary) {
-      const appliedIds = new Set(preview.map((r) => r.id));
-      const finalTaskIds = [
-        ...weekSummaryTasks.filter((t) => !appliedIds.has(t.id)).map((t) => t.id),
-        ...preview.map((r) => r.id),
-      ];
-      saveWeekSummary(weekKey, finalTaskIds, pendingSummary);
-    }
-    setPreview(null);
-    setPendingSummary(null);
+  function handleConfirmPreview() {
+    confirmPreview();
     setShowSuccessToast(true);
     setTimeout(() => setShowSuccessToast(false), 3000);
   }
@@ -309,7 +216,6 @@ export default function WeekPage() {
     (t) => t.scheduledDate === null && t.completedAt === null,
   ).length;
   const weekKey = dates[0];
-  const isVisible = (t: Task) => !isArchived(t) || archiveTransitionIds.includes(t.id);
   const weekSummaryTasks = visibleTasks.filter(
     (t) =>
       t.scheduledDate !== null &&
@@ -321,47 +227,12 @@ export default function WeekPage() {
 
   if (preview) {
     return (
-      <main className="min-h-dvh px-4 pb-8 pt-6 animate-[pageFade_0.15s_ease-out]">
-        <h1 className="mb-1 font-[family-name:var(--font-heading)] text-2xl font-extrabold text-white">
-          Ось як я розклав тиждень. Підходить?
-        </h1>
-        <p className="mb-4 text-sm text-neutral-400">
-          Зміни день, де треба, а потім застосуй.
-        </p>
-
-        <div className="flex flex-col gap-3">
-          {preview.map((row, index) => (
-            <div
-              key={row.id}
-              style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
-              className="flex items-center justify-between gap-3 rounded-2xl bg-card p-5 animate-[fadeInUp_0.2s_ease-out_backwards]"
-            >
-              <span className="min-w-0 flex-1 break-words text-base text-white">{row.title}</span>
-              <DaySelect
-                value={row.scheduledDate}
-                onChange={(value) => updatePreviewRow(row.id, value)}
-                excludeNone
-                className="w-32 shrink-0"
-              />
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-6 flex flex-col gap-2">
-          <button
-            onClick={confirmPreview}
-            className={`w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground ${TAP_ACTIVE}`}
-          >
-            Застосувати
-          </button>
-          <button
-            onClick={() => setPreview(null)}
-            className={`w-full rounded-full bg-neutral-800 py-3 text-base text-neutral-300 ${TAP_ACTIVE}`}
-          >
-            Скасувати
-          </button>
-        </div>
-      </main>
+      <WeekBreakdownPreview
+        rows={preview}
+        onChangeRow={updatePreviewRow}
+        onConfirm={handleConfirmPreview}
+        onCancel={cancelPreview}
+      />
     );
   }
 
