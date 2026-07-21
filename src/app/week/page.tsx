@@ -465,7 +465,7 @@ export default function WeekPage() {
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             />
           </span>
-          {weekOffset !== 0 && (
+          {(weekOffset !== 0 || selectedDate !== null) && (
             <button
               type="button"
               onClick={goToToday}
@@ -541,9 +541,18 @@ export default function WeekPage() {
 
       {selectedDate ? (
         <div className="mb-6 animate-[fadeInUp_0.2s_ease-out_backwards]">
-          <h2 className="mb-2 font-[family-name:var(--font-heading)] text-lg font-bold text-white">
-            {formatDayPanelHeader(selectedDate, selectedDayTasks)}
-          </h2>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="font-[family-name:var(--font-heading)] text-lg font-bold text-white">
+              {formatDayPanelHeader(selectedDate, selectedDayTasks)}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setSelectedDate(null)}
+              className={`shrink-0 text-sm text-neutral-500 underline ${TAP_ACTIVE}`}
+            >
+              До тижня
+            </button>
+          </div>
           {selectedDayTasks.length === 0 ? (
             <div className="flex flex-col items-center py-8 text-center">
               <p className="mb-4 text-neutral-400">На цей день нічого не заплановано</p>
