@@ -32,6 +32,7 @@ import {
   weekDates,
   todayString,
   formatWeekRangeLabel,
+  weekOffsetForDate,
   WEEKDAY_SHORT,
   WEEKDAY_FULL,
   MONTH_GENITIVE,
@@ -143,6 +144,17 @@ export default function WeekPage() {
 
   function selectDay(date: string) {
     setSelectedDate((prev) => (prev === date ? null : date));
+  }
+
+  function pickDate(date: string) {
+    if (!date) return;
+    setWeekOffset(Math.max(0, weekOffsetForDate(date, today)));
+    setSelectedDate(date);
+  }
+
+  function goToToday() {
+    setWeekOffset(0);
+    setSelectedDate(null);
   }
 
   function dismissTip() {
@@ -430,22 +442,43 @@ export default function WeekPage() {
 
       {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
 
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between gap-1">
         <button
           onClick={() => setWeekOffset((o) => Math.max(0, o - 1))}
           disabled={weekOffset === 0}
           aria-label="Попередній тиждень"
-          className={`flex h-11 w-11 items-center justify-center rounded-full text-lg text-neutral-400 disabled:opacity-30 ${TAP_ACTIVE}`}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg text-neutral-400 disabled:opacity-30 ${TAP_ACTIVE}`}
         >
           ←
         </button>
-        <span className="text-sm font-medium text-neutral-300">
-          {formatWeekRangeLabel(dates)}
-        </span>
+        <div className="flex flex-1 items-center justify-center gap-2">
+          <span
+            className={`relative inline-flex items-center rounded-lg px-1 py-1.5 text-sm font-medium text-neutral-300 underline decoration-neutral-600 decoration-dotted underline-offset-4 ${TAP_ACTIVE}`}
+          >
+            {formatWeekRangeLabel(dates)}
+            <input
+              type="date"
+              value={selectedDate ?? ""}
+              min={today}
+              onChange={(e) => pickDate(e.target.value)}
+              aria-label="Обрати дату"
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            />
+          </span>
+          {weekOffset !== 0 && (
+            <button
+              type="button"
+              onClick={goToToday}
+              className={`shrink-0 rounded-full bg-neutral-800 px-2.5 py-1 text-xs font-medium text-neutral-300 ${TAP_ACTIVE}`}
+            >
+              Сьогодні
+            </button>
+          )}
+        </div>
         <button
           onClick={() => setWeekOffset((o) => o + 1)}
           aria-label="Наступний тиждень"
-          className={`flex h-11 w-11 items-center justify-center rounded-full text-lg text-neutral-400 ${TAP_ACTIVE}`}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg text-neutral-400 ${TAP_ACTIVE}`}
         >
           →
         </button>

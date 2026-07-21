@@ -79,7 +79,7 @@ export function TaskCard({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className={`flex-1 text-left ${TAP_ACTIVE}`}
+          className={`min-w-0 flex-1 text-left ${TAP_ACTIVE}`}
         >
           <div className="flex items-baseline gap-2">
             {(startTime || dayLabel) && (

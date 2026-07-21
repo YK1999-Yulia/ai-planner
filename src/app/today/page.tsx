@@ -232,7 +232,7 @@ export default function TodayPage() {
 
   const overdueSection = overdueTasks.length > 0 && (
     <div ref={overdueSectionRef} className="mt-6 rounded-2xl bg-red-500/10 p-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <button
           onClick={() => setOverdueExpanded((v) => !v)}
           className={`flex items-center gap-1.5 font-[family-name:var(--font-heading)] text-lg font-bold text-red-400 ${TAP_ACTIVE}`}

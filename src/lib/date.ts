@@ -58,6 +58,18 @@ export function currentWeekDates(referenceDate: Date = new Date()): string[] {
   return weekDates(0, referenceDate);
 }
 
+/** Whole weeks between the Monday of `dateStr`'s week and the Monday of `today`'s week. */
+export function weekOffsetForDate(dateStr: string, today: string = todayString()): number {
+  const dayMs = 24 * 60 * 60 * 1000;
+  const mondayTime = (d: string) => {
+    const [y, m, dd] = d.split("-").map(Number);
+    const date = new Date(y, m - 1, dd);
+    date.setDate(date.getDate() - weekdayIndex(d));
+    return date.getTime();
+  };
+  return Math.round((mondayTime(dateStr) - mondayTime(today)) / (7 * dayMs));
+}
+
 export function formatShortDate(dateStr: string): string {
   const [, m, d] = dateStr.split("-");
   return `${d}.${m}`;
