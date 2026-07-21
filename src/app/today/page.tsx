@@ -208,12 +208,13 @@ export default function TodayPage() {
   const allDone = totalTodayCount > 0 && doneCount === totalTodayCount;
   const planGenerated = hasGeneratedPlan(today);
   const planTaskIds = getGeneratedPlanTaskIds(today);
-  const currentTodayIds = todayAllForCount.map((t) => t.id).sort();
+  const activeTodayIds = todayAllForCount.filter((t) => !isArchived(t)).map((t) => t.id);
+  const todayIdsSet = new Set(todayAllForCount.map((t) => t.id));
   const planIsStale =
     planGenerated &&
     planTaskIds !== null &&
-    (planTaskIds.length !== currentTodayIds.length ||
-      planTaskIds.some((id, i) => id !== currentTodayIds[i]));
+    (activeTodayIds.some((id) => !planTaskIds.includes(id)) ||
+      planTaskIds.some((id) => !todayIdsSet.has(id)));
   const inboxHasTasks = allTasks.some(
     (t) => t.scheduledDate === null && t.completedAt === null,
   );
@@ -398,12 +399,6 @@ export default function TodayPage() {
             {!planGenerated && (
               <p className="mb-3 rounded-xl bg-accent/15 px-4 py-3 text-sm font-medium text-accent">
                 Сформуй план — я розставлю задачі по часу
-              </p>
-            )}
-
-            {planGenerated && planIsStale && (
-              <p className="mb-3 rounded-xl bg-accent/15 px-4 py-3 text-sm font-medium text-accent">
-                План застарів. Сформувати заново?
               </p>
             )}
 
