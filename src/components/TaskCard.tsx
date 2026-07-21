@@ -103,6 +103,11 @@ export function TaskCard({
             >
               {PRIORITY_LABELS[task.priority]}
             </span>
+            {!isDone && task.scheduledDate === null && (
+              <span className="rounded-full bg-neutral-800 px-2 py-0.5 font-medium text-neutral-500">
+                без дня
+              </span>
+            )}
             {Boolean(task.estimatedMinutes) && (
               <span className="text-neutral-400">{formatDuration(task.estimatedMinutes as number)}</span>
             )}

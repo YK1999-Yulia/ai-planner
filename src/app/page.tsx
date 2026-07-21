@@ -13,6 +13,7 @@ import {
   dismissWelcome,
 } from "@/lib/welcome-store";
 import { getUserName } from "@/lib/profile-storage";
+import { markJustSaved } from "@/lib/save-toast-store";
 import { getGreeting } from "@/lib/format";
 import { todayString } from "@/lib/date";
 import { vibrate } from "@/lib/haptics";
@@ -124,6 +125,7 @@ export default function CapturePage() {
     }));
     addTasks(tasks);
     markTipSeen("preview");
+    markJustSaved(tasks.length);
     setText("");
     setDrafts(null);
     setIsExampleFlow(false);

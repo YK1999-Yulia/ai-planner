@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
   subscribeTasks,
@@ -24,11 +24,18 @@ import {
   markJustCompleted,
   clearJustCompleted,
 } from "@/lib/archive-transition-store";
+import {
+  subscribeJustSaved,
+  getJustSaved,
+  getJustSavedServerSnapshot,
+  clearJustSaved,
+} from "@/lib/save-toast-store";
 import { hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import { TaskCard } from "@/components/TaskCard";
 import { TipBanner } from "@/components/TipBanner";
 import { EmptyState } from "@/components/EmptyState";
 import { isArchived } from "@/lib/archive";
+import { pluralTasks } from "@/lib/format";
 import { TAP_ACTIVE, TAP_TARGET_44 } from "@/lib/ui";
 import type { Priority, Task } from "@/lib/types";
 
@@ -93,6 +100,17 @@ export default function InboxPage() {
     getArchiveTransitionIds,
     getArchiveTransitionIdsServerSnapshot,
   );
+  const justSaved = useSyncExternalStore(
+    subscribeJustSaved,
+    getJustSaved,
+    getJustSavedServerSnapshot,
+  );
+
+  useEffect(() => {
+    if (justSaved === null) return;
+    const timeoutId = setTimeout(clearJustSaved, 4000);
+    return () => clearTimeout(timeoutId);
+  }, [justSaved]);
 
   const tasks = allTasks.filter(
     (t) => t.scheduledDate === null && (!isArchived(t) || archiveTransitionIds.includes(t.id)),
@@ -152,13 +170,28 @@ export default function InboxPage() {
       ) : tasks.length === 0 ? (
         <EmptyState
           icon="✅"
-          text="Усі задачі розкладені по днях ✓"
+          text="Усі задачі розкладені ✓"
           subtitle="Тут з'являться нові, коли занотуєш"
           actionLabel="Занотувати"
           actionHref="/"
         />
       ) : (
         <>
+          {visibleTasks.length > 0 && (
+            <div className="mb-4 rounded-2xl bg-card p-4">
+              <p className="mb-3 text-sm text-neutral-300">
+                У тебе {visibleTasks.length} {pluralTasks(visibleTasks.length)} без дня. Хочеш,
+                розкладу їх по тижню?
+              </p>
+              <Link
+                href="/week"
+                className={`inline-block rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground ${TAP_ACTIVE}`}
+              >
+                Розкласти по днях
+              </Link>
+            </div>
+          )}
+
           <div className="mb-4 flex flex-wrap gap-2">
             {FILTER_OPTIONS.map((opt) => (
               <button
@@ -248,6 +281,19 @@ export default function InboxPage() {
           >
             Повернути
           </button>
+        </div>
+      )}
+
+      {justSaved !== null && (
+        <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-lg animate-[fadeInUp_0.2s_ease-out]">
+          <span className="text-sm font-medium text-white">Збережено! Розкласти по днях?</span>
+          <Link
+            href="/week"
+            onClick={clearJustSaved}
+            className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_TARGET_44} ${TAP_ACTIVE}`}
+          >
+            Розкласти по днях
+          </Link>
         </div>
       )}
     </main>
