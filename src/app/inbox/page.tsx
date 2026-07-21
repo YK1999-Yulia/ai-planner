@@ -310,18 +310,8 @@ export default function InboxPage() {
       )}
 
       {justSaved !== null && (
-        <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-lg animate-[fadeInUp_0.2s_ease-out]">
-          <span className="text-sm font-medium text-white">Збережено! Розкласти по днях?</span>
-          <button
-            onClick={() => {
-              clearJustSaved();
-              distributeWeek();
-            }}
-            disabled={distributing}
-            className={`ml-3 shrink-0 text-sm font-semibold text-accent disabled:opacity-40 ${TAP_TARGET_44} ${TAP_ACTIVE}`}
-          >
-            {distributing ? "Розкладаю..." : "Розкласти по днях"}
-          </button>
+        <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-center rounded-2xl bg-card px-4 py-3 shadow-lg animate-[fadeInUp_0.2s_ease-out]">
+          <span className="text-sm font-medium text-white">Збережено!</span>
         </div>
       )}
     </main>
