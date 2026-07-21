@@ -336,7 +336,7 @@ export default function WeekPage() {
               style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
               className="flex items-center justify-between gap-3 rounded-2xl bg-card p-5 animate-[fadeInUp_0.2s_ease-out_backwards]"
             >
-              <span className="flex-1 text-base text-white">{row.title}</span>
+              <span className="min-w-0 flex-1 text-base text-white">{row.title}</span>
               <DaySelect
                 value={row.scheduledDate}
                 onChange={(value) => updatePreviewRow(row.id, value)}
@@ -413,7 +413,7 @@ export default function WeekPage() {
           <p className="mb-3 font-medium text-neutral-300">Всі задачі вже розкладені ✓</p>
           <Link
             href="/"
-            className={`inline-block rounded-full bg-neutral-800 px-5 py-2.5 text-sm font-medium text-neutral-200 ${TAP_ACTIVE}`}
+            className={`inline-block rounded-full bg-neutral-800 px-6 py-3 text-base font-semibold text-neutral-200 ${TAP_ACTIVE}`}
           >
             Занотувати нову
           </Link>
@@ -469,7 +469,7 @@ export default function WeekPage() {
             <button
               type="button"
               onClick={goToToday}
-              className={`shrink-0 rounded-full bg-neutral-800 px-2.5 py-1 text-xs font-medium text-neutral-300 ${TAP_ACTIVE}`}
+              className={`shrink-0 rounded-full bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-300 ${TAP_ACTIVE}`}
             >
               Сьогодні
             </button>
@@ -606,7 +606,7 @@ export default function WeekPage() {
           {weekSummaryTasks.length > 0 && (
             <div className="mb-6 rounded-2xl bg-card p-4">
               <div className="mb-2 flex items-start justify-between gap-2">
-                <p className="flex-1 text-sm text-neutral-200">
+                <p className="min-w-0 flex-1 text-sm text-neutral-200">
                   {storedSummary
                     ? storedSummary.summary
                     : `На цей тиждень: ${weekSummaryTasks.length} ${pluralTasks(weekSummaryTasks.length)} · ${formatDuration(
@@ -676,8 +676,15 @@ export default function WeekPage() {
       )}
 
       {showSuccessToast && (
-        <div className="fixed inset-x-4 bottom-20 z-20 rounded-2xl bg-card px-4 py-3 text-center text-sm font-medium text-white shadow-lg animate-[fadeInUp_0.2s_ease-out]">
-          Готово! Задачі розкладені по днях
+        <div className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-lg animate-[fadeInUp_0.2s_ease-out]">
+          <span className="text-sm font-medium text-white">Готово! Задачі тепер у Тижні</span>
+          <Link
+            href="/week"
+            onClick={() => setShowSuccessToast(false)}
+            className={`ml-3 shrink-0 text-sm font-semibold text-accent ${TAP_TARGET_44} ${TAP_ACTIVE}`}
+          >
+            Переглянути тиждень
+          </Link>
         </div>
       )}
     </main>

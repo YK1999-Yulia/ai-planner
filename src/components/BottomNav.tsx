@@ -65,30 +65,32 @@ export function BottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`relative flex-1 rounded-xl py-3 text-center text-sm ${TAP_ACTIVE} ${
+              className={`flex-1 rounded-xl py-3 text-center text-sm ${TAP_ACTIVE} ${
                 active
                   ? "bg-accent font-semibold text-accent-foreground"
                   : "font-medium text-neutral-500"
               }`}
             >
-              {tab.label}
-              {count > 0 && (
-                <span className="absolute right-2 top-1.5 inline-flex">
-                  <span
-                    className={`flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none ${
-                      active ? "bg-accent-foreground text-accent" : "bg-accent text-accent-foreground"
-                    }`}
-                  >
-                    {count}
+              <span className="relative inline-flex items-center whitespace-nowrap">
+                {tab.label}
+                {count > 0 && (
+                  <span className="absolute -right-3 -top-5 inline-flex">
+                    <span
+                      className={`flex h-4 w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold leading-none ${
+                        active ? "bg-accent-foreground text-accent" : "bg-accent text-accent-foreground"
+                      }`}
+                    >
+                      {count}
+                    </span>
+                    {showDot && (
+                      <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+                    )}
                   </span>
-                  {showDot && (
-                    <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500" />
-                  )}
-                </span>
-              )}
-              {count === 0 && showDot && (
-                <span className="absolute right-3 top-2 h-2 w-2 rounded-full bg-red-500" />
-              )}
+                )}
+                {count === 0 && showDot && (
+                  <span className="absolute -right-2 -top-4 h-1.5 w-1.5 rounded-full bg-red-500" />
+                )}
+              </span>
             </Link>
           );
         })}

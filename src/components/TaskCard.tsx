@@ -24,6 +24,7 @@ interface TaskCardProps {
   onDelete: (task: Task) => void;
   onUpdate: (id: string, patch: Partial<Task>) => void;
   onScheduleToday?: () => void;
+  scheduleLabel?: string;
 }
 
 export function TaskCard({
@@ -37,6 +38,7 @@ export function TaskCard({
   onDelete,
   onUpdate,
   onScheduleToday,
+  scheduleLabel = "На сьогодні",
 }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
   const isDone = task.completedAt !== null;
@@ -135,22 +137,22 @@ export function TaskCard({
       {onScheduleToday && !isDone && (
         <button
           onClick={onScheduleToday}
-          className={`mt-3 rounded-full bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-200 ${TAP_ACTIVE}`}
+          className={`mt-3 rounded-full bg-neutral-800 px-3 py-1.5 text-xs font-normal text-neutral-400 ${TAP_ACTIVE}`}
         >
-          На сьогодні
+          {scheduleLabel}
         </button>
       )}
 
       {expanded && (
         <div className="mt-4 border-t border-white/10 pt-4 animate-[fadeInUp_0.2s_ease-out_backwards]">
-          <label className="mb-1 block text-xs text-neutral-400">Запланована на</label>
+          <label className="mb-1 block text-xs text-neutral-500">Запланована на</label>
           <DaySelect
             value={task.scheduledDate}
             onChange={(value) => onUpdate(task.id, { scheduledDate: value })}
             className="mb-3 w-full"
           />
 
-          <label className="mb-1 block text-xs text-neutral-400">Дедлайн</label>
+          <label className="mb-1 block text-xs text-neutral-500">Дедлайн</label>
           <DeadlineSelect
             value={task.deadline}
             onChange={(value) => onUpdate(task.id, { deadline: value })}
@@ -169,7 +171,7 @@ export function TaskCard({
             ))}
           </select>
 
-          <label className="mb-1 block text-xs text-neutral-400">Тривалість</label>
+          <label className="mb-1 block text-xs text-neutral-500">Тривалість</label>
           <DurationSelect
             value={task.estimatedMinutes}
             onChange={(minutes) => onUpdate(task.id, { estimatedMinutes: minutes })}

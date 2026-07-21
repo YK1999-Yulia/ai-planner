@@ -4,6 +4,7 @@ import { TAP_ACTIVE } from "@/lib/ui";
 interface EmptyStateProps {
   icon: string;
   text: string;
+  subtitle?: string;
   actionLabel?: string;
   actionHref?: string;
   secondaryLabel?: string;
@@ -14,6 +15,7 @@ interface EmptyStateProps {
 export function EmptyState({
   icon,
   text,
+  subtitle,
   actionLabel,
   actionHref,
   secondaryLabel,
@@ -24,7 +26,8 @@ export function EmptyState({
       <span className="mb-3 text-4xl" aria-hidden>
         {icon}
       </span>
-      <p className="mb-6 text-neutral-300">{text}</p>
+      <p className={subtitle ? "mb-1 text-neutral-300" : "mb-6 text-neutral-300"}>{text}</p>
+      {subtitle && <p className="mb-6 text-sm text-neutral-500">{subtitle}</p>}
       {actionLabel && actionHref && (
         <Link
           href={actionHref}

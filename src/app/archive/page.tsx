@@ -38,7 +38,7 @@ function ArchiveCard({
       style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
       className="flex items-center justify-between gap-3 rounded-2xl bg-card p-4 animate-[fadeInUp_0.2s_ease-out_backwards]"
     >
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <p className="text-base text-neutral-500 line-through">{task.title}</p>
         <p className="mt-1 text-xs text-neutral-500">
           {formatArchiveGroupLabel(completedDateString(task) as string)}

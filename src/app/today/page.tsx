@@ -280,6 +280,7 @@ export default function TodayPage() {
               onDelete={remove}
               onUpdate={update}
               onScheduleToday={() => update(task.id, { scheduledDate: today })}
+              scheduleLabel="Перенести на сьогодні?"
             />
           ))}
         </div>

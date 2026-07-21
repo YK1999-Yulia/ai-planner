@@ -142,10 +142,18 @@ export default function InboxPage() {
         </Link>
       </div>
 
-      {tasks.length === 0 ? (
+      {allTasks.length === 0 ? (
         <EmptyState
           icon="📥"
           text="Тут порожньо — занотуй перші думки, і задачі з'являться тут"
+          actionLabel="Занотувати"
+          actionHref="/"
+        />
+      ) : tasks.length === 0 ? (
+        <EmptyState
+          icon="✅"
+          text="Усі задачі розкладені по днях ✓"
+          subtitle="Тут з'являться нові, коли занотуєш"
           actionLabel="Занотувати"
           actionHref="/"
         />
