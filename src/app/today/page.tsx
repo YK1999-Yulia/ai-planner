@@ -402,18 +402,20 @@ export default function TodayPage() {
               </p>
             )}
 
-            <button
-              onClick={generatePlan}
-              disabled={generating}
-              className={`mb-4 rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
-            >
-              {generating ? "Складаю план..." : "Сформувати план на сьогодні"}
-            </button>
+            <div className="mb-4 flex justify-center">
+              <button
+                onClick={generatePlan}
+                disabled={generating}
+                className={`inline-flex w-64 items-center justify-center rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
+              >
+                {generating ? "Складаю план..." : "Сформувати план на сьогодні"}
+              </button>
+            </div>
           </>
         )}
 
         {planGenerated && !planIsStale && (
-          <p className="mb-4 rounded-xl bg-accent/15 px-4 py-3 text-sm font-medium text-accent">
+          <p className="mb-4 text-center text-sm font-medium text-accent">
             Усе наведено до ладу ✨
           </p>
         )}
