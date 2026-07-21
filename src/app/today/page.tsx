@@ -196,11 +196,9 @@ export default function TodayPage() {
     .sort((a, b) => (a.deadline as string).localeCompare(b.deadline as string));
 
   let cursor = settings.dayStart;
-  const withTimes = todayTasks.map((t) => {
-    const start = cursor;
+  for (const t of todayTasks) {
     cursor = addMinutes(cursor, t.estimatedMinutes && t.estimatedMinutes > 0 ? t.estimatedMinutes : 30);
-    return { task: t, start };
-  });
+  }
 
   const overflow = cursor > settings.dayEnd;
   const progressPercent =
@@ -429,12 +427,11 @@ export default function TodayPage() {
         )}
 
         <div className="flex flex-col gap-4">
-          {withTimes.map(({ task, start }, index) => (
+          {todayTasks.map((task, index) => (
             <TaskCard
               key={task.id}
               task={task}
               index={index}
-              startTime={planGenerated && !planIsStale ? start : undefined}
               onToggleDone={toggleDone}
               onDelete={remove}
               onUpdate={update}

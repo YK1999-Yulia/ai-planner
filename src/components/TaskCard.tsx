@@ -17,7 +17,6 @@ const STAGGER_CAP = 12;
 interface TaskCardProps {
   task: Task;
   index?: number;
-  startTime?: string;
   dayLabel?: string;
   overdueLabel?: string;
   compact?: boolean;
@@ -31,7 +30,6 @@ interface TaskCardProps {
 export function TaskCard({
   task,
   index = 0,
-  startTime,
   dayLabel,
   overdueLabel,
   compact,
@@ -85,10 +83,8 @@ export function TaskCard({
           className={`min-w-0 flex-1 text-left ${TAP_ACTIVE}`}
         >
           <div className="flex items-baseline gap-2">
-            {(startTime || dayLabel) && (
-              <span className="text-sm font-medium text-neutral-400">
-                {startTime ?? dayLabel}
-              </span>
+            {dayLabel && (
+              <span className="text-sm font-medium text-neutral-400">{dayLabel}</span>
             )}
             <p
               className={`min-w-0 break-words ${compact ? "text-sm" : "text-base"} ${
