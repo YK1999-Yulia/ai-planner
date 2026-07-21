@@ -90,7 +90,7 @@ export function TaskCard({
               </span>
             )}
             <p
-              className={`${compact ? "text-sm" : "text-base"} ${
+              className={`min-w-0 break-words ${compact ? "text-sm" : "text-base"} ${
                 isDone ? "text-neutral-500 line-through" : "text-white"
               }`}
             >

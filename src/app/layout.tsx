@@ -39,9 +39,9 @@ export default function RootLayout({
   return (
     <html
       lang="uk"
-      className={`${geistSans.variable} ${geistMono.variable} ${manrope.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${manrope.variable} h-full overflow-x-hidden antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-surface pb-16 text-white">
+      <body className="flex min-h-full flex-col overflow-x-hidden bg-surface pb-16 text-white">
         {children}
         <BottomNav />
       </body>

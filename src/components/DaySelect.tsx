@@ -28,12 +28,12 @@ export function DaySelect({ value, onChange, excludeNone, className }: DaySelect
   }
 
   return (
-    <div className={`relative ${className ?? ""}`}>
+    <div className={`relative min-w-0 overflow-hidden rounded-lg ${className ?? ""}`}>
       <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
       <select
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value || null)}
-        className="w-full appearance-none rounded-lg border border-white/10 bg-card py-2 pr-8 pl-9 text-neutral-200"
+        className="w-full min-w-0 max-w-full appearance-none rounded-lg border border-white/10 bg-card py-2 pr-8 pl-9 text-neutral-200"
       >
         {ungrouped.map((opt) => (
           <option key={opt.value ?? "none"} value={opt.value ?? ""}>

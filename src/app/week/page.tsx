@@ -336,7 +336,7 @@ export default function WeekPage() {
               style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
               className="flex items-center justify-between gap-3 rounded-2xl bg-card p-5 animate-[fadeInUp_0.2s_ease-out_backwards]"
             >
-              <span className="min-w-0 flex-1 text-base text-white">{row.title}</span>
+              <span className="min-w-0 flex-1 break-words text-base text-white">{row.title}</span>
               <DaySelect
                 value={row.scheduledDate}
                 onChange={(value) => updatePreviewRow(row.id, value)}
@@ -606,7 +606,7 @@ export default function WeekPage() {
           {weekSummaryTasks.length > 0 && (
             <div className="mb-6 rounded-2xl bg-card p-4">
               <div className="mb-2 flex items-start justify-between gap-2">
-                <p className="min-w-0 flex-1 text-sm text-neutral-200">
+                <p className="min-w-0 flex-1 break-words text-sm text-neutral-200">
                   {storedSummary
                     ? storedSummary.summary
                     : `На цей тиждень: ${weekSummaryTasks.length} ${pluralTasks(weekSummaryTasks.length)} · ${formatDuration(

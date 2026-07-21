@@ -8,13 +8,13 @@ interface DeadlineSelectProps {
 
 export function DeadlineSelect({ value, onChange, className }: DeadlineSelectProps) {
   return (
-    <div className={`relative ${className ?? ""}`}>
+    <div className={`relative min-w-0 overflow-hidden rounded-lg ${className ?? ""}`}>
       <CalendarCheck className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
       <input
         type="date"
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value || null)}
-        className={`w-full rounded-lg border border-white/10 bg-card py-2 pr-3 pl-9 [color-scheme:dark] ${
+        className={`w-full min-w-0 max-w-full rounded-lg border border-white/10 bg-card py-2 pr-3 pl-9 [color-scheme:dark] ${
           value ? "text-neutral-200" : "text-transparent"
         }`}
       />
