@@ -8,7 +8,8 @@ import { TAP_ACTIVE } from "@/lib/ui";
 import { DaySelect } from "@/components/DaySelect";
 import { DeadlineSelect } from "@/components/DeadlineSelect";
 import { DurationSelect } from "@/components/DurationSelect";
-import type { Priority, Task } from "@/lib/types";
+import { PrioritySelect } from "@/components/PrioritySelect";
+import type { Task } from "@/lib/types";
 
 const STAGGER_MS = 35;
 const STAGGER_CAP = 12;
@@ -164,17 +165,12 @@ export function TaskCard({
             className="mb-3 w-full"
           />
 
-          <select
+          <label className="mb-1 block text-xs text-neutral-500">Пріоритет</label>
+          <PrioritySelect
             value={task.priority}
-            onChange={(e) => onUpdate(task.id, { priority: e.target.value as Priority })}
-            className="mb-3 rounded-lg bg-neutral-800 px-2 py-2 text-sm text-neutral-200"
-          >
-            {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => onUpdate(task.id, { priority: value })}
+            className="mb-3 w-full"
+          />
 
           <label className="mb-1 block text-xs text-neutral-500">Тривалість</label>
           <DurationSelect

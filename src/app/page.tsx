@@ -4,7 +4,6 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { addTasks } from "@/lib/tasks-store";
-import { PRIORITY_LABELS } from "@/lib/priority";
 import { markWelcomeSeen, hasSeenTip, markTipSeen } from "@/lib/onboarding-storage";
 import {
   subscribeWelcome,
@@ -23,8 +22,9 @@ import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { DaySelect } from "@/components/DaySelect";
 import { DeadlineSelect } from "@/components/DeadlineSelect";
 import { DurationSelect } from "@/components/DurationSelect";
+import { PrioritySelect } from "@/components/PrioritySelect";
 import { TipBanner } from "@/components/TipBanner";
-import type { ParsedTaskDraft, Priority, Task } from "@/lib/types";
+import type { ParsedTaskDraft, Task } from "@/lib/types";
 
 const EXAMPLE_TEXT =
   "Купити молоко і хліб, подзвонити мамі до вечора, доробити презентацію для клієнта до п'ятниці, записатись до лікаря";
@@ -206,19 +206,12 @@ export default function CapturePage() {
                 />
               </div>
 
-              <select
+              <label className="mb-1 block text-xs text-neutral-500">Пріоритет</label>
+              <PrioritySelect
                 value={draft.priority}
-                onChange={(e) =>
-                  updateDraft(index, { priority: e.target.value as Priority })
-                }
-                className="mb-3 rounded-lg bg-neutral-800 px-2 py-2 text-sm text-neutral-200"
-              >
-                {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => updateDraft(index, { priority: value })}
+                className="mb-3 w-full"
+              />
 
               <DurationSelect
                 value={draft.estimatedMinutes}
