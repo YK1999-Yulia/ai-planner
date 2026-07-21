@@ -269,48 +269,6 @@ export default function WeekPage() {
         />
       )}
 
-      {allTasks.length === 0 ? (
-        <div className="mb-4 rounded-2xl bg-card p-5 text-center">
-          <p className="mb-3 text-neutral-300">Поки нема що розкладати</p>
-          <Link
-            href="/"
-            className={`inline-block rounded-full bg-accent px-6 py-3 text-base font-semibold text-accent-foreground ${TAP_ACTIVE}`}
-          >
-            Занотувати першу задачу
-          </Link>
-        </div>
-      ) : unscheduledCount === 0 ? (
-        <div className="mb-4 rounded-2xl bg-card p-5 text-center">
-          <p className="mb-3 font-medium text-neutral-300">Всі задачі вже розкладені ✓</p>
-          <Link
-            href="/"
-            className={`inline-block rounded-full bg-neutral-800 px-6 py-3 text-base font-semibold text-neutral-200 ${TAP_ACTIVE}`}
-          >
-            Занотувати нову
-          </Link>
-        </div>
-      ) : (
-        <>
-          <button
-            onClick={distributeWeek}
-            disabled={distributing}
-            className={`mb-1 w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
-          >
-            {distributing ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground" />
-                Розкладаю...
-              </span>
-            ) : (
-              `Розкласти по днях (${unscheduledCount})`
-            )}
-          </button>
-          <p className="mb-4 text-xs text-neutral-500">
-            Розкидаю незаплановані задачі по днях тижня — з огляду на дедлайни і пріоритети
-          </p>
-        </>
-      )}
-
       {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
 
       <div className="mb-3 flex items-center justify-between gap-1">
