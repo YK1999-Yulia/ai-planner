@@ -393,25 +393,35 @@ export default function TodayPage() {
           Робочі години: {settings.dayStart}–{settings.dayEnd}
         </Link>
 
-        {!planGenerated && (
-          <p className="mb-3 rounded-xl bg-accent/15 px-4 py-3 text-sm font-medium text-accent">
-            Сформуй план — я розставлю задачі по часу
-          </p>
+        {(!planGenerated || planIsStale) && (
+          <>
+            {!planGenerated && (
+              <p className="mb-3 rounded-xl bg-accent/15 px-4 py-3 text-sm font-medium text-accent">
+                Сформуй план — я розставлю задачі по часу
+              </p>
+            )}
+
+            {planGenerated && planIsStale && (
+              <p className="mb-3 rounded-xl bg-accent/15 px-4 py-3 text-sm font-medium text-accent">
+                План застарів. Сформувати заново?
+              </p>
+            )}
+
+            <button
+              onClick={generatePlan}
+              disabled={generating}
+              className={`mb-4 rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
+            >
+              {generating ? "Складаю план..." : "Сформувати план на сьогодні"}
+            </button>
+          </>
         )}
 
-        {planGenerated && planIsStale && (
-          <p className="mb-3 rounded-xl bg-accent/15 px-4 py-3 text-sm font-medium text-accent">
-            План застарів. Сформувати заново?
+        {planGenerated && !planIsStale && (
+          <p className="mb-4 rounded-xl bg-accent/15 px-4 py-3 text-sm font-medium text-accent">
+            Усе наведено до ладу ✨
           </p>
         )}
-
-        <button
-          onClick={generatePlan}
-          disabled={generating}
-          className={`mb-4 w-full rounded-full bg-accent py-4 text-lg font-semibold text-accent-foreground disabled:opacity-40 ${TAP_ACTIVE}`}
-        >
-          {generating ? "Складаю план..." : "Сформувати план на сьогодні"}
-        </button>
 
         {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
 
